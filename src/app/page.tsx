@@ -1,65 +1,168 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const { t } = useTranslation('common');
+  // Example plumbing services data
+  const services = [
+    { name: "Leak Repair", description: "Fix leaking pipes, faucets, and toilets." },
+    { name: "Drain Cleaning", description: "Clear clogged drains and pipes." },
+    { name: "Water Heater Installation", description: "Install or replace water heaters." },
+    { name: "Emergency Plumbing", description: "24/7 emergency plumbing services." },
+    { name: "Pipe Replacement", description: "Replace old or damaged pipes." },
+    { name: "Bathroom Remodeling", description: "Upgrade and remodel your bathroom plumbing." },
+  ];
+
+  // Reviews system (localStorage for demo)
+  type Review = { name: string; rating: string; comment: string; date: string };
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewForm, setReviewForm] = useState({ name: "", rating: "5", comment: "" });
+  const [reviewSuccess, setReviewSuccess] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("plumbflow_reviews");
+      if (stored) setReviews(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleReviewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setReviewForm({ ...reviewForm, [e.target.name]: e.target.value });
+  };
+
+  const handleReviewSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const newReview: Review = { ...reviewForm, date: new Date().toISOString() };
+    const updated = [newReview, ...reviews];
+    setReviews(updated);
+    setReviewForm({ name: "", rating: "5", comment: "" });
+    setReviewSuccess("Thank you for your review!");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("plumbflow_reviews", JSON.stringify(updated));
+    }
+    setTimeout(() => setReviewSuccess(""), 2000);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-blue-50 dark:bg-dark font-sans">
+      <div className="max-w-4xl mx-auto py-12 px-4">
+        <section className="mb-12 text-center">
+          <h1 className="text-5xl font-extrabold mb-4 text-primary" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui' }}>{t('hero')}</h1>
+          <p className="text-lg mb-6 text-blue-900 dark:text-blue-200">{t('subtext')}</p>
+          <a href="#booking" className="inline-block px-8 py-3 bg-accent text-white font-semibold rounded-lg shadow hover:bg-green-600 transition">{t('cta')}</a>
+        </section>
+        <h1 className="text-4xl font-bold mb-8 text-blue-900 dark:text-blue-200">{t('title')}</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mb-16">
+          {services.map((service) => (
+            <div key={service.name} className="rounded-lg shadow-md bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-800">
+              <h2 className="text-2xl font-semibold mb-2 text-blue-800 dark:text-blue-100">{service.name}</h2>
+              <p className="text-zinc-700 dark:text-zinc-300">{service.description}</p>
+            </div>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Contact Form */}
+        <div className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800 mb-12">
+          <h2 className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-100">Contact Us</h2>
+          <form className="flex flex-col gap-4">
+            <input
+              type="text"
+              name="name"
+              placeholder="Your Name"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <input
+              type="email"
+              name="email"
+              placeholder="Your Email"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <textarea
+              name="message"
+              placeholder="Your Message"
+              rows={4}
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <button
+              type="submit"
+              className="mt-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-6 rounded"
+            >
+              Send Message
+            </button>
+          </form>
         </div>
-      </main>
-    </div>
+
+        {/* Appointment Booking Form */}
+        <div className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800">
+          <h2 className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-100">Book an Appointment</h2>
+          <form className="flex flex-col gap-4">
+            <input
+              type="text"
+              name="name"
+              placeholder="Your Name"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Your Email"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <input
+              type="tel"
+              name="phone"
+              placeholder="Your Phone Number"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <input
+              type="date"
+              name="date"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <input
+              type="time"
+              name="time"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <select
+              name="service"
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            >
+              <option value="">Select Service</option>
+              {services.map((service) => (
+                <option key={service.name} value={service.name}>{service.name}</option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="mt-2 bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded"
+            >
+              Book Appointment
+            </button>
+          </form>
+          <div className="mt-6">
+            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-2">Test payments enabled. No real charges will be made.</p>
+            <button
+              type="button"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded"
+              onClick={() => alert('Stripe test payment flow placeholder. Connect Stripe API for real payments.')}
+            >
+              Pay with Stripe (Test Mode)
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
