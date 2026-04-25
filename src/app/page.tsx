@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const { t } = useTranslation('common');
+  const heroText = "Fast, Reliable Plumbing When You Need It Most";
+  const heroSubtext = "Book trusted local plumbers in minutes. Emergency or scheduled.";
+  const heroCta = "Book Now";
   // Example plumbing services data
   const services = [
     { name: "Leak Repair", description: "Fix leaking pipes, faucets, and toilets." },
@@ -49,11 +49,11 @@ export default function Home() {
     <main className="min-h-screen bg-blue-50 dark:bg-dark font-sans">
       <div className="max-w-4xl mx-auto py-12 px-4">
         <section className="mb-12 text-center">
-          <h1 className="text-5xl font-extrabold mb-4 text-primary" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui' }}>{t('hero')}</h1>
-          <p className="text-lg mb-6 text-blue-900 dark:text-blue-200">{t('subtext')}</p>
-          <a href="#booking" className="inline-block px-8 py-3 bg-accent text-white font-semibold rounded-lg shadow hover:bg-green-600 transition">{t('cta')}</a>
+          <h1 className="text-5xl font-extrabold mb-4 text-primary" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui' }}>{heroText}</h1>
+          <p className="text-lg mb-6 text-blue-900 dark:text-blue-200">{heroSubtext}</p>
+          <a href="#booking" className="inline-block px-8 py-3 bg-accent text-white font-semibold rounded-lg shadow hover:bg-green-600 transition">{heroCta}</a>
         </section>
-        <h1 className="text-4xl font-bold mb-8 text-blue-900 dark:text-blue-200">{t('title')}</h1>
+        <h1 className="text-4xl font-bold mb-8 text-blue-900 dark:text-blue-200">Our Plumbing Services</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mb-16">
           {services.map((service) => (
             <div key={service.name} className="rounded-lg shadow-md bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-800">
