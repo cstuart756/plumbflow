@@ -21,6 +21,17 @@ export default function Home() {
   const [reviewForm, setReviewForm] = useState({ name: "", rating: "5", comment: "" });
   const [reviewSuccess, setReviewSuccess] = useState("");
 
+  const [bookingForm, setBookingForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    date: "",
+    time: "",
+    service: "",
+  });
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [bookingMessage, setBookingMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("plumbflow_reviews");
@@ -43,6 +54,36 @@ export default function Home() {
       localStorage.setItem("plumbflow_reviews", JSON.stringify(updated));
     }
     setTimeout(() => setReviewSuccess(""), 2000);
+  };
+
+  const handleBookingChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setBookingForm({ ...bookingForm, [e.target.name]: e.target.value });
+  };
+
+  const handleBookingSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setBookingMessage(null);
+    setBookingSubmitting(true);
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingForm),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBookingMessage({ type: "error", text: data?.error ?? "Booking failed" });
+        return;
+      }
+
+      setBookingForm({ name: "", email: "", phone: "", date: "", time: "", service: "" });
+      setBookingMessage({ type: "success", text: "Booking received — we’ll be in touch shortly." });
+    } finally {
+      setBookingSubmitting(false);
+    }
   };
 
   return (
@@ -98,13 +139,15 @@ export default function Home() {
         </div>
 
         {/* Appointment Booking Form */}
-        <div className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800">
+        <div id="booking" className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800">
           <h2 className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-100">Book an Appointment</h2>
-          <form className="flex flex-col gap-4">
+          <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
             <input
               type="text"
               name="name"
               placeholder="Your Name"
+              value={bookingForm.name}
+              onChange={handleBookingChange}
               className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               required
             />
@@ -112,6 +155,8 @@ export default function Home() {
               type="email"
               name="email"
               placeholder="Your Email"
+              value={bookingForm.email}
+              onChange={handleBookingChange}
               className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               required
             />
@@ -119,23 +164,31 @@ export default function Home() {
               type="tel"
               name="phone"
               placeholder="Your Phone Number"
+              value={bookingForm.phone}
+              onChange={handleBookingChange}
               className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               required
             />
             <input
               type="date"
               name="date"
+              value={bookingForm.date}
+              onChange={handleBookingChange}
               className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               required
             />
             <input
               type="time"
               name="time"
+              value={bookingForm.time}
+              onChange={handleBookingChange}
               className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               required
             />
             <select
               name="service"
+              value={bookingForm.service}
+              onChange={handleBookingChange}
               className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               required
             >
@@ -146,21 +199,24 @@ export default function Home() {
             </select>
             <button
               type="submit"
-              className="mt-2 bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded"
+              className="mt-2 bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+              disabled={bookingSubmitting}
             >
-              Book Appointment
+              {bookingSubmitting ? "Booking..." : "Book Appointment"}
             </button>
+
+            {bookingMessage && (
+              <div
+                className={
+                  bookingMessage.type === "success"
+                    ? "text-green-700 dark:text-green-300 text-sm"
+                    : "text-red-700 dark:text-red-300 text-sm"
+                }
+              >
+                {bookingMessage.text}
+              </div>
+            )}
           </form>
-          <div className="mt-6">
-            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-2">Test payments enabled. No real charges will be made.</p>
-            <button
-              type="button"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded"
-              onClick={() => alert('Stripe test payment flow placeholder. Connect Stripe API for real payments.')}
-            >
-              Pay with Stripe (Test Mode)
-            </button>
-          </div>
         </div>
       </div>
     </main>
