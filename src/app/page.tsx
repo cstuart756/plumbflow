@@ -31,6 +31,23 @@ export default function Home() {
   });
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingMessage, setBookingMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [lastBookingId, setLastBookingId] = useState<string | null>(null);
+
+  const [manageLookup, setManageLookup] = useState({ bookingId: "", email: "" });
+  const [manageLoading, setManageLoading] = useState(false);
+  const [manageMessage, setManageMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [managedBooking, setManagedBooking] = useState<null | {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    service: string;
+    date: string;
+    time: string;
+    notes: string | null;
+    status: string;
+  }>(null);
+  const [manageEdit, setManageEdit] = useState({ name: "", phone: "", service: "", date: "", time: "", notes: "" });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -80,9 +97,96 @@ export default function Home() {
       }
 
       setBookingForm({ name: "", email: "", phone: "", date: "", time: "", service: "" });
+      const bookingId = String(data?.bookingId ?? "");
+      setLastBookingId(bookingId || null);
       setBookingMessage({ type: "success", text: "Booking received — we’ll be in touch shortly." });
     } finally {
       setBookingSubmitting(false);
+    }
+  };
+
+  const handleManageLookup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setManageMessage(null);
+    setManageLoading(true);
+    setManagedBooking(null);
+    try {
+      const id = manageLookup.bookingId.trim();
+      const email = manageLookup.email.trim();
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}?email=${encodeURIComponent(email)}`, {
+        cache: "no-store",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setManageMessage({ type: "error", text: data?.error ?? "Booking not found" });
+        return;
+      }
+      setManagedBooking(data.booking);
+      setManageEdit({
+        name: data.booking.name,
+        phone: data.booking.phone,
+        service: data.booking.service,
+        date: data.booking.date,
+        time: data.booking.time,
+        notes: data.booking.notes ?? "",
+      });
+      setManageMessage({ type: "success", text: "Booking loaded." });
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const handleManageSave = async () => {
+    if (!managedBooking) return;
+    setManageMessage(null);
+    setManageLoading(true);
+    try {
+      const res = await fetch(`/api/bookings/${encodeURIComponent(managedBooking.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: manageLookup.email,
+          name: manageEdit.name,
+          phone: manageEdit.phone,
+          service: manageEdit.service,
+          date: manageEdit.date,
+          time: manageEdit.time,
+          notes: manageEdit.notes,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setManageMessage({ type: "error", text: data?.error ?? "Update failed" });
+        return;
+      }
+      setManagedBooking(data.booking);
+      setManageMessage({ type: "success", text: "Booking updated." });
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const handleManageCancel = async () => {
+    if (!managedBooking) return;
+    const ok = window.confirm("Cancel this booking? This cannot be undone.");
+    if (!ok) return;
+    setManageMessage(null);
+    setManageLoading(true);
+    try {
+      const res = await fetch(`/api/bookings/${encodeURIComponent(managedBooking.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: manageLookup.email, cancel: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setManageMessage({ type: "error", text: data?.error ?? "Cancel failed" });
+        return;
+      }
+      setManagedBooking(data.booking);
+      setManageMessage({ type: "success", text: "Booking canceled." });
+    } finally {
+      setManageLoading(false);
     }
   };
 
@@ -216,7 +320,128 @@ export default function Home() {
                 {bookingMessage.text}
               </div>
             )}
+
+            {bookingMessage?.type === "success" && lastBookingId && (
+              <div className="text-sm text-zinc-700 dark:text-zinc-300">
+                Your booking ID: <span className="font-mono">{lastBookingId}</span>
+              </div>
+            )}
           </form>
+        </div>
+
+        <div className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800 mt-12">
+          <h2 className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-100">Manage Your Booking</h2>
+          <form className="flex flex-col gap-4" onSubmit={handleManageLookup}>
+            <input
+              type="text"
+              name="bookingId"
+              placeholder="Booking ID"
+              value={manageLookup.bookingId}
+              onChange={(e) => setManageLookup({ ...manageLookup, bookingId: e.target.value })}
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email used for booking"
+              value={manageLookup.email}
+              onChange={(e) => setManageLookup({ ...manageLookup, email: e.target.value })}
+              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              required
+            />
+            <button
+              type="submit"
+              className="mt-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+              disabled={manageLoading}
+            >
+              {manageLoading ? "Loading..." : "Load Booking"}
+            </button>
+          </form>
+
+          {manageMessage && (
+            <div
+              className={
+                manageMessage.type === "success"
+                  ? "mt-4 text-green-700 dark:text-green-300 text-sm"
+                  : "mt-4 text-red-700 dark:text-red-300 text-sm"
+              }
+            >
+              {manageMessage.text}
+            </div>
+          )}
+
+          {managedBooking && (
+            <div className="mt-6">
+              <div className="text-sm text-zinc-700 dark:text-zinc-300 mb-4">
+                Status: <span className="font-semibold">{managedBooking.status}</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  value={manageEdit.name}
+                  onChange={(e) => setManageEdit({ ...manageEdit, name: e.target.value })}
+                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  placeholder="Name"
+                />
+                <input
+                  type="tel"
+                  value={manageEdit.phone}
+                  onChange={(e) => setManageEdit({ ...manageEdit, phone: e.target.value })}
+                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  placeholder="Phone"
+                />
+                <select
+                  value={manageEdit.service}
+                  onChange={(e) => setManageEdit({ ...manageEdit, service: e.target.value })}
+                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                >
+                  {services.map((s) => (
+                    <option key={s.name} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  value={manageEdit.date}
+                  onChange={(e) => setManageEdit({ ...manageEdit, date: e.target.value })}
+                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                />
+                <input
+                  type="time"
+                  value={manageEdit.time}
+                  onChange={(e) => setManageEdit({ ...manageEdit, time: e.target.value })}
+                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+              <textarea
+                className="mt-4 w-full p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                rows={3}
+                value={manageEdit.notes}
+                onChange={(e) => setManageEdit({ ...manageEdit, notes: e.target.value })}
+                placeholder="Notes (optional)"
+              />
+              <div className="mt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleManageSave}
+                  className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+                  disabled={manageLoading}
+                >
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={handleManageCancel}
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+                  disabled={manageLoading || managedBooking.status === "CANCELED"}
+                >
+                  Cancel Booking
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>
