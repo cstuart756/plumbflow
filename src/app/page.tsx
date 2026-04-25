@@ -309,23 +309,21 @@ export default function Home() {
               {bookingSubmitting ? "Booking..." : "Book Appointment"}
             </button>
 
-            {bookingMessage && (
-              <div
-                className={
-                  bookingMessage.type === "success"
-                    ? "text-green-700 dark:text-green-300 text-sm"
-                    : "text-red-700 dark:text-red-300 text-sm"
-                }
-              >
-                {bookingMessage.text}
+            {bookingMessage?.type === "success" && lastBookingId ? (
+              <div className="text-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 rounded p-3">
+                <div className="text-green-700 dark:text-green-300">{bookingMessage.text}</div>
+                <div className="mt-2 text-zinc-700 dark:text-zinc-300">
+                  Save this booking ID to manage or cancel later:
+                  <div className="mt-1">
+                    <span className="font-mono px-2 py-1 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                      {lastBookingId}
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
-
-            {bookingMessage?.type === "success" && lastBookingId && (
-              <div className="text-sm text-zinc-700 dark:text-zinc-300">
-                Your booking ID: <span className="font-mono">{lastBookingId}</span>
-              </div>
-            )}
+            ) : bookingMessage ? (
+              <div className="text-red-700 dark:text-red-300 text-sm">{bookingMessage.text}</div>
+            ) : null}
           </form>
         </div>
 
