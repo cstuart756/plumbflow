@@ -176,11 +176,11 @@ export default function Home() {
   };
 
   const panelClass =
-    "glass-card w-full max-w-xl rounded-2xl p-8 lg:p-10";
+    "glass-card card-choreo w-full max-w-xl rounded-2xl p-6 sm:p-8 lg:p-10";
   const inputClass =
-    "w-full rounded-xl border bg-white/85 dark:bg-slate-900/70 px-4 py-3 text-zinc-900 dark:text-zinc-100";
+    "w-full min-h-12 rounded-xl border bg-white/85 px-4 py-3 text-base text-zinc-900 dark:bg-slate-900/70 dark:text-zinc-100";
   const primaryButtonClass =
-    "mt-2 rounded-xl bg-[var(--brand)] px-6 py-3 font-semibold text-white hover:bg-[var(--brand-strong)] disabled:opacity-60";
+    "btn-choreo mt-2 w-full rounded-xl bg-[var(--brand)] px-6 py-3 font-semibold text-white hover:bg-[var(--brand-strong)] disabled:opacity-60 sm:w-auto";
 
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const redirectPayment = searchParams?.get("payment");
@@ -200,18 +200,18 @@ export default function Home() {
   return (
     <main className="min-h-screen font-sans">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
-        <section className="mb-12 text-center sm:mb-14">
+        <section className="section-reveal mb-12 text-center sm:mb-14" style={{ animationDelay: "60ms" }}>
           <span className="mb-5 inline-flex rounded-full border border-sky-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-700 dark:border-sky-800 dark:bg-slate-900/70 dark:text-sky-300">
             Licensed Local Pros | Same-Day Availability
           </span>
           <h1 className="mb-4 text-4xl font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-5xl lg:text-6xl">{heroText}</h1>
           <p className="mx-auto mb-7 max-w-2xl text-base text-slate-700 dark:text-slate-300 sm:text-lg">{heroSubtext}</p>
-          <a href="#booking" className="inline-block rounded-xl bg-[var(--accent)] px-8 py-3 font-semibold text-white shadow-lg shadow-emerald-900/20 hover:translate-y-[-1px] hover:brightness-95">{heroCta}</a>
+          <a href="#booking" className="btn-choreo inline-block rounded-xl bg-[var(--accent)] px-8 py-3 font-semibold text-white shadow-lg shadow-emerald-900/20 hover:brightness-95">{heroCta}</a>
         </section>
-        <h2 className="mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">Our Plumbing Services</h2>
+        <h2 className="section-reveal mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl" style={{ animationDelay: "130ms" }}>Our Plumbing Services</h2>
         <div className="mb-16 grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
-          {services.map((service) => (
-            <div key={service.name} className="glass-card rounded-2xl p-6 hover:translate-y-[-2px]">
+          {services.map((service, idx) => (
+            <div key={service.name} className="section-reveal glass-card card-choreo rounded-2xl p-6" style={{ animationDelay: `${200 + idx * 70}ms` }}>
               <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">{service.name}</h3>
               <p className="text-zinc-700 dark:text-zinc-300">{service.description}</p>
             </div>
@@ -219,13 +219,14 @@ export default function Home() {
         </div>
 
         {/* Contact Form */}
-        <div className={`${panelClass} mb-12`}>
+        <div className={`${panelClass} section-reveal mb-12`} style={{ animationDelay: "280ms" }}>
           <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Contact Us</h2>
           <form className="flex flex-col gap-4">
             <input
               type="text"
               name="name"
               placeholder="Your Name"
+              autoComplete="name"
               className={inputClass}
               required
             />
@@ -233,6 +234,7 @@ export default function Home() {
               type="email"
               name="email"
               placeholder="Your Email"
+              autoComplete="email"
               className={inputClass}
               required
             />
@@ -240,7 +242,7 @@ export default function Home() {
               name="message"
               placeholder="Your Message"
               rows={4}
-              className={inputClass}
+              className={`${inputClass} min-h-28`}
               required
             />
             <button
@@ -253,7 +255,7 @@ export default function Home() {
         </div>
 
         {/* Appointment Booking Form */}
-        <div id="booking" className={panelClass}>
+        <div id="booking" className={`${panelClass} section-reveal`} style={{ animationDelay: "340ms" }}>
           <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Book an Appointment</h2>
           <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
             <input
@@ -262,6 +264,7 @@ export default function Home() {
               placeholder="Your Name"
               value={bookingForm.name}
               onChange={handleBookingChange}
+              autoComplete="name"
               className={inputClass}
               required
             />
@@ -271,6 +274,7 @@ export default function Home() {
               placeholder="Your Email"
               value={bookingForm.email}
               onChange={handleBookingChange}
+              autoComplete="email"
               className={inputClass}
               required
             />
@@ -280,6 +284,8 @@ export default function Home() {
               placeholder="Your Phone Number"
               value={bookingForm.phone}
               onChange={handleBookingChange}
+              autoComplete="tel"
+              inputMode="tel"
               className={inputClass}
               required
             />
@@ -313,7 +319,7 @@ export default function Home() {
             </select>
             <button
               type="submit"
-              className="mt-2 rounded-xl bg-[var(--accent)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60"
+              className="btn-choreo mt-2 w-full rounded-xl bg-[var(--accent)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60 sm:w-auto"
               disabled={bookingSubmitting}
             >
               {bookingSubmitting ? "Booking..." : "Book Appointment"}
@@ -353,7 +359,7 @@ export default function Home() {
           </form>
         </div>
 
-        <div className={`${panelClass} mt-12`}>
+        <div className={`${panelClass} section-reveal mt-12`} style={{ animationDelay: "400ms" }}>
           <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Manage Your Booking</h2>
           <form className="flex flex-col gap-4" onSubmit={handleManageLookup}>
             <input
@@ -371,6 +377,7 @@ export default function Home() {
               placeholder="Email used for booking"
               value={manageLookup.email}
               onChange={(e) => setManageLookup({ ...manageLookup, email: e.target.value })}
+              autoComplete="email"
               className={inputClass}
               required
             />
@@ -412,6 +419,7 @@ export default function Home() {
                   type="tel"
                   value={manageEdit.phone}
                   onChange={(e) => setManageEdit({ ...manageEdit, phone: e.target.value })}
+                  inputMode="tel"
                   className={inputClass}
                   placeholder="Phone"
                 />
@@ -446,11 +454,11 @@ export default function Home() {
                 onChange={(e) => setManageEdit({ ...manageEdit, notes: e.target.value })}
                 placeholder="Notes (optional)"
               />
-              <div className="mt-4 flex gap-3">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
                   onClick={handleManageSave}
-                  className="rounded-xl bg-[var(--accent)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60"
+                  className="btn-choreo w-full rounded-xl bg-[var(--accent)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60 sm:w-auto"
                   disabled={manageLoading}
                 >
                   Save Changes
@@ -458,7 +466,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleManageCancel}
-                  className="rounded-xl bg-[var(--danger)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60"
+                  className="btn-choreo w-full rounded-xl bg-[var(--danger)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60 sm:w-auto"
                   disabled={manageLoading || managedBooking.status === "CANCELED"}
                 >
                   Cancel Booking

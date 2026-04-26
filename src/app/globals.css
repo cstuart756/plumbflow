@@ -68,3 +68,71 @@ a {
   box-shadow: 0 10px 30px rgba(10, 32, 62, 0.12);
 }
 
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.section-reveal {
+  opacity: 0;
+  animation: reveal-up 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.card-choreo {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.card-choreo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.25), transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 440ms ease;
+  pointer-events: none;
+}
+
+.card-choreo:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 34px rgba(10, 32, 62, 0.18);
+}
+
+.card-choreo:hover::after {
+  transform: translateX(120%);
+}
+
+.btn-choreo {
+  transform: translateZ(0);
+}
+
+.btn-choreo:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.08);
+}
+
+.btn-choreo:active {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-reveal {
+    opacity: 1;
+    animation: none;
+  }
+
+  .card-choreo,
+  .btn-choreo,
+  .card-choreo::after {
+    transition: none;
+    transform: none;
+  }
+}
+
