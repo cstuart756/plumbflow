@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { sendBookingConfirmationEmail } from "@/utils/email";
 
@@ -32,6 +31,7 @@ export async function POST(req: Request) {
     const bookingId = session.metadata?.bookingId;
 
     if (bookingId) {
+      const { prisma } = await import("@/lib/prisma");
       const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
 
       const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
