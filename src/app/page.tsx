@@ -15,12 +15,6 @@ export default function Home() {
     { name: "Bathroom Remodeling", description: "Upgrade and remodel your bathroom plumbing." },
   ];
 
-  // Reviews system (localStorage for demo)
-  type Review = { name: string; rating: string; comment: string; date: string };
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewForm, setReviewForm] = useState({ name: "", rating: "5", comment: "" });
-  const [reviewSuccess, setReviewSuccess] = useState("");
-
   const [bookingForm, setBookingForm] = useState({
     name: "",
     email: "",
@@ -50,28 +44,14 @@ export default function Home() {
   const [manageEdit, setManageEdit] = useState({ name: "", phone: "", service: "", date: "", time: "", notes: "" });
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("plumbflow_reviews");
-      if (stored) setReviews(JSON.parse(stored));
-    }
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (!payment) return;
+
+    const cleaned = `${window.location.pathname}${window.location.hash}`;
+    window.history.replaceState({}, "", cleaned);
   }, []);
-
-  const handleReviewChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setReviewForm({ ...reviewForm, [e.target.name]: e.target.value });
-  };
-
-  const handleReviewSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const newReview: Review = { ...reviewForm, date: new Date().toISOString() };
-    const updated = [newReview, ...reviews];
-    setReviews(updated);
-    setReviewForm({ name: "", rating: "5", comment: "" });
-    setReviewSuccess("Thank you for your review!");
-    if (typeof window !== "undefined") {
-      localStorage.setItem("plumbflow_reviews", JSON.stringify(updated));
-    }
-    setTimeout(() => setReviewSuccess(""), 2000);
-  };
 
   const handleBookingChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -84,7 +64,7 @@ export default function Home() {
     setBookingMessage(null);
     setBookingSubmitting(true);
     try {
-      const res = await fetch("/api/bookings", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingForm),
@@ -99,7 +79,12 @@ export default function Home() {
       setBookingForm({ name: "", email: "", phone: "", date: "", time: "", service: "" });
       const bookingId = String(data?.bookingId ?? "");
       setLastBookingId(bookingId || null);
-      setBookingMessage({ type: "success", text: "Booking received — we’ll be in touch shortly." });
+      setBookingMessage({ type: "success", text: "Redirecting to secure payment..." });
+
+      const url = String(data?.checkoutUrl ?? "");
+      if (url) {
+        window.location.assign(url);
+      }
     } finally {
       setBookingSubmitting(false);
     }
@@ -190,52 +175,77 @@ export default function Home() {
     }
   };
 
+  const panelClass =
+    "glass-card w-full max-w-xl rounded-2xl p-8 lg:p-10";
+  const inputClass =
+    "w-full rounded-xl border bg-white/85 dark:bg-slate-900/70 px-4 py-3 text-zinc-900 dark:text-zinc-100";
+  const primaryButtonClass =
+    "mt-2 rounded-xl bg-[var(--brand)] px-6 py-3 font-semibold text-white hover:bg-[var(--brand-strong)] disabled:opacity-60";
+
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const redirectPayment = searchParams?.get("payment");
+  const redirectBookingId = searchParams?.get("bookingId");
+  const resolvedBookingId = lastBookingId ?? redirectBookingId;
+  const resolvedBookingMessage =
+    bookingMessage ??
+    (redirectPayment === "success"
+      ? { type: "success", text: "Payment successful - your booking is confirmed." as const }
+      : redirectPayment === "cancel"
+        ? {
+            type: "error",
+            text: "Payment canceled - your booking is not confirmed until payment is completed." as const,
+          }
+        : null);
+
   return (
-    <main className="min-h-screen bg-blue-50 dark:bg-dark font-sans">
-      <div className="max-w-4xl mx-auto py-12 px-4">
-        <section className="mb-12 text-center">
-          <h1 className="text-5xl font-extrabold mb-4 text-primary" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui' }}>{heroText}</h1>
-          <p className="text-lg mb-6 text-blue-900 dark:text-blue-200">{heroSubtext}</p>
-          <a href="#booking" className="inline-block px-8 py-3 bg-accent text-white font-semibold rounded-lg shadow hover:bg-green-600 transition">{heroCta}</a>
+    <main className="min-h-screen font-sans">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+        <section className="mb-12 text-center sm:mb-14">
+          <span className="mb-5 inline-flex rounded-full border border-sky-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-700 dark:border-sky-800 dark:bg-slate-900/70 dark:text-sky-300">
+            Licensed Local Pros | Same-Day Availability
+          </span>
+          <h1 className="mb-4 text-4xl font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-5xl lg:text-6xl">{heroText}</h1>
+          <p className="mx-auto mb-7 max-w-2xl text-base text-slate-700 dark:text-slate-300 sm:text-lg">{heroSubtext}</p>
+          <a href="#booking" className="inline-block rounded-xl bg-[var(--accent)] px-8 py-3 font-semibold text-white shadow-lg shadow-emerald-900/20 hover:translate-y-[-1px] hover:brightness-95">{heroCta}</a>
         </section>
-        <h1 className="text-4xl font-bold mb-8 text-blue-900 dark:text-blue-200">Our Plumbing Services</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mb-16">
+        <h2 className="mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">Our Plumbing Services</h2>
+        <div className="mb-16 grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
           {services.map((service) => (
-            <div key={service.name} className="rounded-lg shadow-md bg-white dark:bg-zinc-900 p-6 border border-zinc-200 dark:border-zinc-800">
-              <h2 className="text-2xl font-semibold mb-2 text-blue-800 dark:text-blue-100">{service.name}</h2>
+            <div key={service.name} className="glass-card rounded-2xl p-6 hover:translate-y-[-2px]">
+              <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">{service.name}</h3>
               <p className="text-zinc-700 dark:text-zinc-300">{service.description}</p>
             </div>
           ))}
         </div>
 
         {/* Contact Form */}
-        <div className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800 mb-12">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-100">Contact Us</h2>
+        <div className={`${panelClass} mb-12`}>
+          <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Contact Us</h2>
           <form className="flex flex-col gap-4">
             <input
               type="text"
               name="name"
               placeholder="Your Name"
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <input
               type="email"
               name="email"
               placeholder="Your Email"
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <textarea
               name="message"
               placeholder="Your Message"
               rows={4}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <button
               type="submit"
-              className="mt-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-6 rounded"
+              className={primaryButtonClass}
             >
               Send Message
             </button>
@@ -243,8 +253,8 @@ export default function Home() {
         </div>
 
         {/* Appointment Booking Form */}
-        <div id="booking" className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-100">Book an Appointment</h2>
+        <div id="booking" className={panelClass}>
+          <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Book an Appointment</h2>
           <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
             <input
               type="text"
@@ -252,7 +262,7 @@ export default function Home() {
               placeholder="Your Name"
               value={bookingForm.name}
               onChange={handleBookingChange}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <input
@@ -261,7 +271,7 @@ export default function Home() {
               placeholder="Your Email"
               value={bookingForm.email}
               onChange={handleBookingChange}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <input
@@ -270,7 +280,7 @@ export default function Home() {
               placeholder="Your Phone Number"
               value={bookingForm.phone}
               onChange={handleBookingChange}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <input
@@ -278,7 +288,7 @@ export default function Home() {
               name="date"
               value={bookingForm.date}
               onChange={handleBookingChange}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <input
@@ -286,14 +296,14 @@ export default function Home() {
               name="time"
               value={bookingForm.time}
               onChange={handleBookingChange}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <select
               name="service"
               value={bookingForm.service}
               onChange={handleBookingChange}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             >
               <option value="">Select Service</option>
@@ -303,32 +313,48 @@ export default function Home() {
             </select>
             <button
               type="submit"
-              className="mt-2 bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+              className="mt-2 rounded-xl bg-[var(--accent)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60"
               disabled={bookingSubmitting}
             >
               {bookingSubmitting ? "Booking..." : "Book Appointment"}
             </button>
 
-            {bookingMessage?.type === "success" && lastBookingId ? (
-              <div className="text-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 rounded p-3">
-                <div className="text-green-700 dark:text-green-300">{bookingMessage.text}</div>
+            {resolvedBookingMessage && resolvedBookingId ? (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+                <div
+                  className={
+                    resolvedBookingMessage.type === "success"
+                      ? "text-green-700 dark:text-green-300"
+                      : "text-red-700 dark:text-red-300"
+                  }
+                >
+                  {resolvedBookingMessage.text}
+                </div>
                 <div className="mt-2 text-zinc-700 dark:text-zinc-300">
                   Save this booking ID to manage or cancel later:
                   <div className="mt-1">
-                    <span className="font-mono px-2 py-1 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
-                      {lastBookingId}
+                    <span className="rounded-md border border-zinc-200 bg-white px-2 py-1 font-mono dark:border-zinc-700 dark:bg-zinc-900">
+                      {resolvedBookingId}
                     </span>
                   </div>
                 </div>
               </div>
-            ) : bookingMessage ? (
-              <div className="text-red-700 dark:text-red-300 text-sm">{bookingMessage.text}</div>
+            ) : resolvedBookingMessage ? (
+              <div
+                className={
+                  resolvedBookingMessage.type === "success"
+                    ? "text-green-700 dark:text-green-300 text-sm"
+                    : "text-red-700 dark:text-red-300 text-sm"
+                }
+              >
+                {resolvedBookingMessage.text}
+              </div>
             ) : null}
           </form>
         </div>
 
-        <div className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-lg shadow-md p-8 border border-zinc-200 dark:border-zinc-800 mt-12">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-100">Manage Your Booking</h2>
+        <div className={`${panelClass} mt-12`}>
+          <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Manage Your Booking</h2>
           <form className="flex flex-col gap-4" onSubmit={handleManageLookup}>
             <input
               type="text"
@@ -336,7 +362,7 @@ export default function Home() {
               placeholder="Booking ID"
               value={manageLookup.bookingId}
               onChange={(e) => setManageLookup({ ...manageLookup, bookingId: e.target.value })}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <input
@@ -345,12 +371,12 @@ export default function Home() {
               placeholder="Email used for booking"
               value={manageLookup.email}
               onChange={(e) => setManageLookup({ ...manageLookup, email: e.target.value })}
-              className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className={inputClass}
               required
             />
             <button
               type="submit"
-              className="mt-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+              className={primaryButtonClass}
               disabled={manageLoading}
             >
               {manageLoading ? "Loading..." : "Load Booking"}
@@ -379,20 +405,20 @@ export default function Home() {
                   type="text"
                   value={manageEdit.name}
                   onChange={(e) => setManageEdit({ ...manageEdit, name: e.target.value })}
-                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className={inputClass}
                   placeholder="Name"
                 />
                 <input
                   type="tel"
                   value={manageEdit.phone}
                   onChange={(e) => setManageEdit({ ...manageEdit, phone: e.target.value })}
-                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className={inputClass}
                   placeholder="Phone"
                 />
                 <select
                   value={manageEdit.service}
                   onChange={(e) => setManageEdit({ ...manageEdit, service: e.target.value })}
-                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className={inputClass}
                 >
                   {services.map((s) => (
                     <option key={s.name} value={s.name}>
@@ -404,17 +430,17 @@ export default function Home() {
                   type="date"
                   value={manageEdit.date}
                   onChange={(e) => setManageEdit({ ...manageEdit, date: e.target.value })}
-                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className={inputClass}
                 />
                 <input
                   type="time"
                   value={manageEdit.time}
                   onChange={(e) => setManageEdit({ ...manageEdit, time: e.target.value })}
-                  className="p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className={inputClass}
                 />
               </div>
               <textarea
-                className="mt-4 w-full p-3 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                className={`${inputClass} mt-4`}
                 rows={3}
                 value={manageEdit.notes}
                 onChange={(e) => setManageEdit({ ...manageEdit, notes: e.target.value })}
@@ -424,7 +450,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleManageSave}
-                  className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+                  className="rounded-xl bg-[var(--accent)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60"
                   disabled={manageLoading}
                 >
                   Save Changes
@@ -432,7 +458,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleManageCancel}
-                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded disabled:opacity-60"
+                  className="rounded-xl bg-[var(--danger)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60"
                   disabled={manageLoading || managedBooking.status === "CANCELED"}
                 >
                   Cancel Booking
@@ -445,3 +471,4 @@ export default function Home() {
     </main>
   );
 }
+

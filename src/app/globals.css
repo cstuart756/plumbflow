@@ -1,28 +1,70 @@
-@import "@fontsource/inter/index.css";
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f8ff;
+  --foreground: #10243d;
+  --surface: #ffffff;
+  --surface-strong: #e8f0ff;
+  --line: #cddcf5;
+  --brand: #0f7aeb;
+  --brand-strong: #0b5fc2;
+  --accent: #0ea372;
+  --danger: #d34249;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Inter", sans-serif;
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #07101d;
+    --foreground: #e5eefc;
+    --surface: #0d1827;
+    --surface-strong: #112235;
+    --line: #233a59;
+    --brand: #58a7ff;
+    --brand-strong: #3c8ce8;
+    --accent: #2dc28e;
+    --danger: #f06a70;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
+  background-image:
+    radial-gradient(circle at 12% 0%, rgba(15, 122, 235, 0.22), transparent 36%),
+    radial-gradient(circle at 88% 12%, rgba(14, 163, 114, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+}
+
+input,
+select,
+textarea {
+  border-color: var(--line);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 26%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 70%, var(--line));
+}
+
+button,
+a {
+  transition: all 180ms ease;
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--surface) 88%, #ffffff 12%);
+  border: 1px solid color-mix(in srgb, var(--line) 88%, #ffffff 12%);
+  box-shadow: 0 10px 30px rgba(10, 32, 62, 0.12);
 }
 
