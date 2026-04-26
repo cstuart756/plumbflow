@@ -1,26 +1,47 @@
-// Mailgun integration for sending booking confirmation emails
-// Set MAILGUN_API_KEY and MAILGUN_DOMAIN in your environment for production use
-import mailgun from "mailgun-js";
+type BookingConfirmationEmailInput = {
+  name: string;
+  email: string;
+  date: string;
+  time: string;
+  service: string;
+};
 
-const mg = mailgun({
-  apiKey: process.env.MAILGUN_API_KEY || "test-key", // replace with your test key
-  domain: process.env.MAILGUN_DOMAIN || "test-domain", // replace with your test domain
-});
+export async function sendBookingConfirmationEmail(input: BookingConfirmationEmailInput): Promise<boolean> {
+  const apiKey = process.env.MAILGUN_API_KEY;
+  const domain = process.env.MAILGUN_DOMAIN;
 
-export async function sendBookingConfirmationEmail({ name, email, date, time, service }) {
-  const data = {
-    from: "Plumbflow <no-reply@plumbflow.com>",
-    to: email,
+  if (!apiKey || !domain) {
+    console.warn("Mailgun is not configured. Skipping booking confirmation email.");
+    return false;
+  }
+
+  const from = process.env.MAIL_FROM || `Plumbflow <postmaster@${domain}>`;
+  const params = new URLSearchParams({
+    from,
+    to: input.email,
     subject: "Booking Confirmation",
-    text: `Hi ${name}, your booking for ${service} on ${date} at ${time} is confirmed. Thank you for choosing Plumbflow!`,
-  };
-  // In test mode, this will not send a real email
+    text: `Hi ${input.name}, your booking for ${input.service} on ${input.date} at ${input.time} is confirmed. Thank you for choosing Plumbflow!`,
+  });
+
   try {
-    const body = await mg.messages().send(data);
-    console.log("Mailgun response:", body);
+    const response = await fetch(`https://api.mailgun.net/v3/${domain}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Mailgun error:", response.status, errorText);
+      return false;
+    }
+
     return true;
-  } catch (err) {
-    console.error("Mailgun error:", err);
+  } catch (error) {
+    console.error("Mailgun request failed:", error);
     return false;
   }
 }
