@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://plumbflow.com";
+
 const sora = Sora({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -13,8 +15,48 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Plumbflow | Fast, Reliable Plumbing",
-  description: "Book trusted local plumbers in minutes for emergency and scheduled service.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Plumbflow | Fast, Reliable Plumbing",
+    template: "%s | Plumbflow",
+  },
+  description: "Book trusted local plumbers in minutes for emergency repairs and scheduled plumbing services.",
+  keywords: [
+    "plumber near me",
+    "emergency plumber",
+    "drain cleaning",
+    "leak repair",
+    "water heater installation",
+    "plumbing services",
+    "book plumber online",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Plumbflow | Fast, Reliable Plumbing",
+    description: "Book trusted local plumbers in minutes for emergency repairs and scheduled plumbing services.",
+    url: "/",
+    siteName: "Plumbflow",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Plumbflow | Fast, Reliable Plumbing",
+    description: "Book trusted local plumbers in minutes for emergency repairs and scheduled plumbing services.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 function RootLayout({

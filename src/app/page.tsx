@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Script from "next/script";
 
 export default function Home() {
   const heroText = "Fast, Reliable Plumbing When You Need It Most";
@@ -14,6 +15,22 @@ export default function Home() {
     { name: "Pipe Replacement", description: "Replace old or damaged pipes." },
     { name: "Bathroom Remodeling", description: "Upgrade and remodel your bathroom plumbing." },
   ];
+  const faqs = [
+    {
+      question: "How quickly can I get an emergency plumber?",
+      answer: "Emergency slots are prioritized and same-day availability is offered when possible.",
+    },
+    {
+      question: "Do I need to pay before the visit?",
+      answer: "You complete a secure checkout to confirm your booking. You will receive a confirmation email after payment.",
+    },
+    {
+      question: "Can I edit or cancel my booking?",
+      answer: "Yes. Use your booking ID and email in the Manage Your Booking section to update details or cancel.",
+    },
+  ];
+  const businessPhone = "+1 555 010 2468";
+  const businessPhoneHref = "tel:+15550102468";
 
   const [bookingForm, setBookingForm] = useState({
     name: "",
@@ -22,6 +39,7 @@ export default function Home() {
     date: "",
     time: "",
     service: "",
+    notes: "",
   });
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingMessage, setBookingMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -42,6 +60,15 @@ export default function Home() {
     status: string;
   }>(null);
   const [manageEdit, setManageEdit] = useState({ name: "", phone: "", service: "", date: "", time: "", notes: "" });
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    service: "",
+    message: "",
+  });
+  const [contactMessage, setContactMessage] = useState<string | null>(null);
+  const [leadAttribution, setLeadAttribution] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -53,10 +80,43 @@ export default function Home() {
     window.history.replaceState({}, "", cleaned);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const keys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"];
+    const attribution = keys
+      .map((key) => {
+        const value = params.get(key);
+        return value ? `${key}=${value}` : "";
+      })
+      .filter(Boolean)
+      .join(" | ");
+    const ref = document.referrer ? `referrer=${document.referrer}` : "";
+    const combined = [attribution, ref].filter(Boolean).join(" | ");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLeadAttribution(combined);
+  }, []);
+
   const handleBookingChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setBookingForm({ ...bookingForm, [e.target.name]: e.target.value });
+  };
+
+  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setContactMessage(null);
+    setBookingForm((prev) => ({
+      ...prev,
+      name: contactForm.name || prev.name,
+      email: contactForm.email || prev.email,
+      phone: contactForm.phone || prev.phone,
+      service: contactForm.service || prev.service,
+      notes: contactForm.message || prev.notes,
+    }));
+    setContactMessage("Great, your details were added. Pick a date and time below to confirm booking.");
+    const bookingEl = document.getElementById("booking");
+    bookingEl?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleBookingSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -67,7 +127,10 @@ export default function Home() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingForm),
+        body: JSON.stringify({
+          ...bookingForm,
+          notes: [bookingForm.notes, leadAttribution].filter(Boolean).join("\n"),
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -76,7 +139,7 @@ export default function Home() {
         return;
       }
 
-      setBookingForm({ name: "", email: "", phone: "", date: "", time: "", service: "" });
+      setBookingForm({ name: "", email: "", phone: "", date: "", time: "", service: "", notes: "" });
       const bookingId = String(data?.bookingId ?? "");
       setLastBookingId(bookingId || null);
       setBookingMessage({ type: "success", text: "Redirecting to secure payment..." });
@@ -197,8 +260,34 @@ export default function Home() {
           }
         : null);
 
+  const localBusinessJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "Plumbflow",
+    url: typeof window !== "undefined" ? window.location.origin : "https://plumbflow.com",
+    telephone: businessPhone,
+    areaServed: "Local service area",
+    priceRange: "$$",
+    description: "Emergency and scheduled plumbing services including leak repair, drain cleaning, and water heater installation.",
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
     <main className="min-h-screen font-sans">
+      <Script id="local-business-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }} />
+      <Script id="faq-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         <section className="section-reveal mb-12 text-center sm:mb-14" style={{ animationDelay: "60ms" }}>
           <span className="mb-5 inline-flex rounded-full border border-sky-200 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-700 dark:border-sky-800 dark:bg-slate-900/70 dark:text-sky-300">
@@ -206,7 +295,11 @@ export default function Home() {
           </span>
           <h1 className="mb-4 text-4xl font-extrabold leading-tight text-slate-900 dark:text-slate-100 sm:text-5xl lg:text-6xl">{heroText}</h1>
           <p className="mx-auto mb-7 max-w-2xl text-base text-slate-700 dark:text-slate-300 sm:text-lg">{heroSubtext}</p>
-          <a href="#booking" className="btn-choreo inline-block rounded-xl bg-[var(--accent)] px-8 py-3 font-semibold text-white shadow-lg shadow-emerald-900/20 hover:brightness-95">{heroCta}</a>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <a href="#booking" className="btn-choreo inline-block rounded-xl bg-[var(--accent)] px-8 py-3 font-semibold text-white shadow-lg shadow-emerald-900/20 hover:brightness-95">{heroCta}</a>
+            <a href={businessPhoneHref} className="btn-choreo inline-block rounded-xl border border-sky-300 bg-white/80 px-8 py-3 font-semibold text-sky-800 dark:border-sky-700 dark:bg-slate-900/70 dark:text-sky-200">Call Now</a>
+          </div>
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">No-obligation booking. Confirmation in under 2 minutes.</p>
         </section>
         <h2 className="section-reveal mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl" style={{ animationDelay: "130ms" }}>Our Plumbing Services</h2>
         <div className="mb-16 grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
@@ -220,13 +313,16 @@ export default function Home() {
 
         {/* Contact Form */}
         <div className={`${panelClass} section-reveal mb-12`} style={{ animationDelay: "280ms" }}>
-          <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Contact Us</h2>
-          <form className="flex flex-col gap-4">
+          <h2 className="mb-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">Quick Quote Intake</h2>
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Start here and we will prefill your booking details below.</p>
+          <form className="flex flex-col gap-4" onSubmit={handleContactSubmit}>
             <input
               type="text"
               name="name"
               placeholder="Your Name"
               autoComplete="name"
+              value={contactForm.name}
+              onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
               className={inputClass}
               required
             />
@@ -235,13 +331,40 @@ export default function Home() {
               name="email"
               placeholder="Your Email"
               autoComplete="email"
+              value={contactForm.email}
+              onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
               className={inputClass}
               required
             />
+            <input
+              type="tel"
+              name="phone"
+              placeholder="Phone Number"
+              autoComplete="tel"
+              inputMode="tel"
+              value={contactForm.phone}
+              onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+              className={inputClass}
+              required
+            />
+            <select
+              name="service"
+              value={contactForm.service}
+              onChange={(e) => setContactForm({ ...contactForm, service: e.target.value })}
+              className={inputClass}
+              required
+            >
+              <option value="">Select Service</option>
+              {services.map((service) => (
+                <option key={service.name} value={service.name}>{service.name}</option>
+              ))}
+            </select>
             <textarea
               name="message"
-              placeholder="Your Message"
+              placeholder="Describe the issue"
               rows={4}
+              value={contactForm.message}
+              onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
               className={`${inputClass} min-h-28`}
               required
             />
@@ -249,14 +372,16 @@ export default function Home() {
               type="submit"
               className={primaryButtonClass}
             >
-              Send Message
+              Continue To Booking
             </button>
+            {contactMessage ? <p className="text-sm text-green-700 dark:text-green-300">{contactMessage}</p> : null}
           </form>
         </div>
 
         {/* Appointment Booking Form */}
         <div id="booking" className={`${panelClass} section-reveal`} style={{ animationDelay: "340ms" }}>
           <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Book an Appointment</h2>
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Choose a date and time, then complete secure checkout to confirm.</p>
           <form className="flex flex-col gap-4" onSubmit={handleBookingSubmit}>
             <input
               type="text"
@@ -317,6 +442,14 @@ export default function Home() {
                 <option key={service.name} value={service.name}>{service.name}</option>
               ))}
             </select>
+            <textarea
+              name="notes"
+              value={bookingForm.notes}
+              onChange={handleBookingChange}
+              className={`${inputClass} min-h-28`}
+              placeholder="Access details, preferred arrival window, or additional notes (optional)"
+              rows={4}
+            />
             <button
               type="submit"
               className="btn-choreo mt-2 w-full rounded-xl bg-[var(--accent)] px-6 py-3 font-semibold text-white hover:brightness-95 disabled:opacity-60 sm:w-auto"
@@ -474,6 +607,24 @@ export default function Home() {
               </div>
             </div>
           )}
+        </div>
+
+        <section className="section-reveal mt-12" style={{ animationDelay: "450ms" }}>
+          <h2 className="mb-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">Frequently Asked Questions</h2>
+          <div className="grid gap-4">
+            {faqs.map((faq) => (
+              <details key={faq.question} className="glass-card rounded-xl p-5">
+                <summary className="cursor-pointer font-semibold text-slate-900 dark:text-slate-100">{faq.question}</summary>
+                <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{faq.answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      </div>
+      <div className="fixed inset-x-0 bottom-3 z-40 px-3 sm:hidden">
+        <div className="glass-card flex items-center gap-2 rounded-2xl p-2">
+          <a href="#booking" className="btn-choreo w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-center text-sm font-semibold text-white">Book Visit</a>
+          <a href={businessPhoneHref} className="btn-choreo w-full rounded-xl bg-[var(--brand)] px-4 py-3 text-center text-sm font-semibold text-white">Call</a>
         </div>
       </div>
     </main>
