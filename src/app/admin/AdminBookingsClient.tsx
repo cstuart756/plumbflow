@@ -16,6 +16,7 @@ type Booking = {
   time: string;
   notes: string | null;
   status: BookingStatus;
+  paid: boolean;
 };
 
 const SERVICES = [
@@ -333,6 +334,7 @@ export function AdminBookingsClient(props: { initialBookings: Booking[] }) {
                 <th className="px-4 py-2 border">Date</th>
                 <th className="px-4 py-2 border">Time</th>
                 <th className="px-4 py-2 border">Service</th>
+                <th className="px-4 py-2 border">Paid</th>
                 <th className="px-4 py-2 border">Status</th>
                 <th className="px-4 py-2 border">Actions</th>
               </tr>
@@ -347,6 +349,7 @@ export function AdminBookingsClient(props: { initialBookings: Booking[] }) {
                   <td className="px-4 py-2 border whitespace-nowrap">{b.date}</td>
                   <td className="px-4 py-2 border whitespace-nowrap">{b.time}</td>
                   <td className="px-4 py-2 border">{b.service}</td>
+                  <td className="px-4 py-2 border whitespace-nowrap">{b.paid ? "Yes" : "No"}</td>
                   <td className="px-4 py-2 border whitespace-nowrap">
                     <select
                       value={b.status}
