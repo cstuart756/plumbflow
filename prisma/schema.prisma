@@ -13,6 +13,142 @@ enum BookingStatus {
   CANCELED
 }
 
+enum LeadStatus {
+  DEMO_ACCESSED
+  EMAIL_CAPTURED
+  BOOKING_STARTED
+  BOOKING_COMPLETED
+  CUSTOMER
+  CHURNED
+}
+
+enum LeadQuality {
+  HOT
+  WARM
+  COLD
+}
+
+enum PlanTier {
+  BASIC
+  PRO
+  PREMIUM
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELED
+}
+
+// User model for customer accounts
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String?
+  name            String?
+  phone           String?
+  
+  // Profile
+  company         String?
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  
+  // Subscription
+  planTier        PlanTier  @default(BASIC)
+  planStartedAt   DateTime  @default(now())
+  planExpiresAt   DateTime?
+  stripeCustomerId String?  @unique
+  
+  // Account status
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
+  
+  // Relationships
+  bookings        Booking[]
+  invoices        Invoice[]
+  lead            Lead?     @relation(fields: [leadId], references: [id])
+  leadId          String?   @unique
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([planTier])
+}
+
+// Lead model for tracking demo-to-customer funnel
+model Lead {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  firstName       String?
+  lastName        String?
+  phone           String?
+  
+  // Funnel tracking
+  status          LeadStatus @default(EMAIL_CAPTURED)
+  quality         LeadQuality @default(COLD)
+  funnelScore     Int       @default(0) // 0-100 lead scoring
+  
+  // CRM integration
+  crmId           String?       // External CRM contact ID
+  crmProvider     String?       // hubspot, pipedrive, salesforce
+  
+  // Engagement tracking
+  emailsCapturedAt  DateTime @default(now())
+  demoAccessedAt    DateTime?
+  bookingStartedAt  DateTime?
+  bookingCompletedAt DateTime?
+  lastEmailSentAt   DateTime?
+  lastInteractionAt DateTime @default(now())
+  
+  // Email campaign
+  emailsReceived  Int       @default(1)
+  emailsOpened    Int       @default(0)
+  emailsClicked   Int       @default(0)
+  unsubscribed    Boolean   @default(false)
+  
+  // Source tracking
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  
+  // Relationship to user (when converted)
+  user            User?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([status])
+  @@index([quality])
+  @@index([funnelScore])
+  @@index([lastInteractionAt])
+}
+
+// Pricing plans
+model PricingPlan {
+  id              String    @id @default(cuid())
+  tier            PlanTier  @unique
+  name            String
+  description     String?
+  monthlyPrice    Int       // in cents
+  annualPrice     Int?      // in cents
+  
+  // Features
+  features        String[]  // JSON array of feature strings
+  maxBookings     Int?      // null = unlimited
+  priority        Boolean   @default(false)
+  
+  isActive        Boolean   @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Booking model
 model Booking {
   id        String        @id @default(cuid())
   createdAt DateTime      @default(now())
@@ -27,11 +163,111 @@ model Booking {
   notes     String?
   status    BookingStatus @default(PENDING)
 
-  paid                  Boolean @default(false)
-  stripeCheckoutSessionId String? @unique
-  stripePaymentIntentId   String? @unique
+  paid                      Boolean @default(false)
+  stripeCheckoutSessionId   String? @unique
+  stripePaymentIntentId     String? @unique
+  amount                    Int?    // in cents
+  
+  // Customer relationship
+  userId                    String?
+  user                      User?   @relation(fields: [userId], references: [id])
+  
+  // Funnel tracking
+  funnelEventsSent          String[] // JSON array of events sent
 
   @@index([createdAt])
   @@index([status])
   @@index([date])
+  @@index([userId])
+}
+
+// Invoice/payment history
+model Invoice {
+  id              String    @id @default(cuid())
+  invoiceNumber   String    @unique
+  status          InvoiceStatus @default(DRAFT)
+  
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  description     String
+  amount          Int       // in cents
+  dueDate         DateTime
+  paidAt          DateTime?
+  
+  stripeInvoiceId String?   @unique
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+}
+
+// Funnel metrics for analytics
+model FunnelMetric {
+  id              String    @id @default(cuid())
+  
+  date            DateTime  @default(now())
+  step            String    // demo_email_captured, demo_accessed, booking_started, booking_completed
+  count           Int       @default(1)
+  
+  // Breakdown dimensions
+  source          String?   // utm_source
+  medium          String?   // utm_medium
+  leadQuality     String?   // HOT, WARM, COLD
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([date])
+  @@index([step])
+  @@index([source])
+}
+
+// Blog posts for SEO & content marketing
+model BlogPost {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  content         String    // Markdown content
+  excerpt         String?
+  
+  // SEO
+  metaDescription String?
+  keywords        String[]  // JSON array
+  ogImage         String?
+  
+  // Publishing
+  published       Boolean   @default(false)
+  publishedAt     DateTime?
+  
+  // Tracking
+  views           Int       @default(0)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([slug])
+  @@index([published])
+}
+
+// Real-time notifications
+model Notification {
+  id              String    @id @default(cuid())
+  
+  userId          String
+  type            String    // booking_reminder, new_booking, payment_received, etc
+  title           String
+  message         String
+  
+  read            Boolean   @default(false)
+  readAt          DateTime?
+  
+  // Link to related resource
+  relatedId       String?   // booking ID, invoice ID, etc
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([read])
 }
