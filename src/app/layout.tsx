@@ -16,6 +16,14 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: [
+      { url: "/images/plumbflowfavicon.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: [{ url: "/images/plumbflowfavicon.png", type: "image/png" }],
+    shortcut: ["/images/plumbflowfavicon.png"],
+  },
   title: {
     default: "Plumbflow | Fast, Reliable Plumbing",
     template: "%s | Plumbflow",
