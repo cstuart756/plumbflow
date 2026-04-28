@@ -223,8 +223,8 @@ export default function Home() {
           <article className="glass-card p-6">
             <p className="text-sm font-medium text-slate-500">Calendar snapshot</p>
             <div className="mt-4 grid grid-cols-7 gap-2 text-center text-sm">
-              {["M", "T", "W", "T", "F", "S", "S"].map((d) => (
-                <span key={d} className="font-semibold text-slate-500">{d}</span>
+              {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+                <span key={`day-${i}`} className="font-semibold text-slate-500">{d}</span>
               ))}
               {Array.from({ length: 21 }, (_, i) => i + 1).map((day) => (
                 <span
