@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
+import PostHogProvider from "@/components/PostHogProvider";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://plumbflow.com";
@@ -88,7 +89,9 @@ function RootLayout({
       lang="en"
       className={`${sora.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <PostHogProvider>{children}</PostHogProvider>
+      </body>
     </html>
   );
 }

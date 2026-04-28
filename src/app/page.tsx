@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import BookingAnimation from "@/components/BookingAnimation";
-import { track } from "@/lib/analytics";
+import DemoGate from "@/components/DemoGate";
+import { track, identifyUser } from "@/lib/analytics";
 
 const features = [
   { title: "Automated Booking", body: "Customers book online in under 60 seconds.", icon: "AB" },
@@ -62,16 +63,54 @@ const plans = [
 const logos = ["Northline Plumbing", "PipeRight", "RapidFlow", "City Drain Co."];
 
 export default function Home() {
+  const [demoUnlocked, setDemoUnlocked] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
   useEffect(() => {
+    // Check if user came from demo link or has already unlocked
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const demoParam = params.get("demo") === "true";
+      const savedEmail = localStorage.getItem("demo_email");
+
+      setIsDemoMode(demoParam || !!savedEmail);
+      setDemoUnlocked(!!savedEmail);
+    }
+
     track("hero_view");
   }, []);
+
+  // Show demo gate if in demo mode but not unlocked
+  if (isDemoMode && !demoUnlocked) {
+    return (
+      <main className="flex min-h-screen items-center justify-center pb-20">
+        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl font-bold text-slate-900 sm:text-5xl">
+              Demo Experience
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-700">
+              See how plumbers use Plumbflow to stop missing calls and fill their
+              calendar automatically.
+            </p>
+          </div>
+          <DemoGate onUnlock={() => setDemoUnlocked(true)} />
+        </div>
+      </main>
+    );
+  }
 
   const handleCtaClick = (location: string) => {
     track("cta_click", { location });
   };
 
+  const handleDemoClick = () => {
+    track("cta_demo_click", { location: "hero" });
+    window.location.href = "/?demo=true";
+  };
+
   const handlePricingClick = (plan: string) => {
-    track("pricing_click", { plan });
+    track("pricing_selected", { plan });
   };
 
   return (
@@ -94,6 +133,12 @@ export default function Home() {
               >
                 View booking flow
               </a>
+              <button
+                onClick={handleDemoClick}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-slate-800 px-6 py-3 font-semibold text-white shadow-md hover:bg-slate-900"
+              >
+                Try Demo
+              </button>
               <a
                 className="cta-secondary"
                 href="#pricing"
