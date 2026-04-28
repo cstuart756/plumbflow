@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import { mockBookingResponse, demoBookings } from "@/lib/demoData";
 
 export const runtime = "nodejs";
 
@@ -9,17 +10,15 @@ function isValidEmail(email: string): boolean {
 }
 
 export async function POST(req: Request) {
-  const priceId = process.env.STRIPE_BOOKING_PRICE_ID;
-  if (!priceId) {
-    return NextResponse.json({ error: "Stripe is not configured" }, { status: 500 });
-  }
-
   let body: any;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+
+  const url = new URL(req.url);
+  const isDemo = url.searchParams.get("demo") === "true";
 
   const name = String(body?.name ?? "").trim();
   const email = String(body?.email ?? "").trim();
@@ -34,6 +33,23 @@ export async function POST(req: Request) {
   }
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+  }
+
+  // DEMO MODE: Return seeded booking immediately without payment flow
+  if (isDemo) {
+    const demoPick = demoBookings[Math.floor(Math.random() * demoBookings.length)];
+    return NextResponse.json({
+      ok: true,
+      bookingId: demoPick.id,
+      demo: true,
+      message: "Demo mode: booking created without payment",
+      booking: demoPick,
+    });
+  }
+
+  const priceId = process.env.STRIPE_BOOKING_PRICE_ID;
+  if (!priceId) {
+    return NextResponse.json({ error: "Stripe is not configured" }, { status: 500 });
   }
 
   const origin = new URL(req.url).origin;

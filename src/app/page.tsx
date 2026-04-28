@@ -1,3 +1,9 @@
+"use client";
+
+import { useEffect } from "react";
+import BookingAnimation from "@/components/BookingAnimation";
+import { track } from "@/lib/analytics";
+
 const features = [
   { title: "Automated Booking", body: "Customers book online in under 60 seconds.", icon: "AB" },
   { title: "Reduce Missed Calls", body: "Capture jobs while you are on-site and busy.", icon: "MC" },
@@ -56,6 +62,18 @@ const plans = [
 const logos = ["Northline Plumbing", "PipeRight", "RapidFlow", "City Drain Co."];
 
 export default function Home() {
+  useEffect(() => {
+    track("hero_view");
+  }, []);
+
+  const handleCtaClick = (location: string) => {
+    track("cta_click", { location });
+  };
+
+  const handlePricingClick = (plan: string) => {
+    track("pricing_click", { plan });
+  };
+
   return (
     <main className="pb-20">
       <section className="hero-shell mx-auto mt-6 max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -69,8 +87,20 @@ export default function Home() {
               Replace missed calls with an always-on booking flow, automatic reminders, and a field-ready dashboard your team can use on the go.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <a className="cta-primary" href="#booking-flow">View booking flow</a>
-              <a className="cta-secondary" href="#pricing">See pricing</a>
+              <a
+                className="cta-primary"
+                href="#booking-flow"
+                onClick={() => handleCtaClick("hero")}
+              >
+                View booking flow
+              </a>
+              <a
+                className="cta-secondary"
+                href="#pricing"
+                onClick={() => handleCtaClick("hero-secondary")}
+              >
+                See pricing
+              </a>
             </div>
             <p className="mt-4 text-sm text-slate-600">No contracts. Setup in one afternoon.</p>
           </div>
@@ -210,14 +240,7 @@ export default function Home() {
 
       <section className="mx-auto mt-14 max-w-6xl px-4 sm:px-6 lg:px-8">
         <h2 className="section-title">How it works</h2>
-        <div className="glass-card mt-5 p-6">
-          <div className="flow-grid">
-            <div className="flow-node">Customer books</div>
-            <div className="flow-node">System schedules</div>
-            <div className="flow-node">Plumber notified</div>
-            <div className="flow-node">Job confirmed</div>
-          </div>
-        </div>
+        <BookingAnimation />
         <div className="mt-5 overflow-hidden rounded-2xl border border-white/70">
           <img src="/images/plumbflowexplainergraphic.png" alt="How Plumbflow works graphic" className="w-full object-cover" />
         </div>
@@ -255,7 +278,12 @@ export default function Home() {
         <h2 className="section-title">Pricing table</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {plans.map((plan) => (
-            <article key={plan.name} className={plan.recommended ? "price-card recommended" : "price-card"}>
+            <article
+              key={plan.name}
+              className={plan.recommended ? "price-card recommended" : "price-card"}
+              onClick={() => handlePricingClick(plan.name)}
+              style={{ cursor: "pointer" }}
+            >
               {plan.recommended ? <span className="label-pill">Recommended</span> : null}
               <h3 className="mt-4 text-xl font-semibold text-slate-900">{plan.name}</h3>
               <p className="mt-2 text-3xl font-bold text-slate-900">
@@ -347,8 +375,20 @@ export default function Home() {
           <h2 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">Start booking more plumbing jobs this week.</h2>
           <p className="mx-auto mt-3 max-w-xl text-slate-700">Launch the full flow now and adapt pricing, plans, and automations as your team grows.</p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <a href="/account/register" className="cta-primary">Create account</a>
-            <a href="/admin/login" className="cta-secondary">Open admin demo</a>
+            <a
+              href="/account/register"
+              className="cta-primary"
+              onClick={() => handleCtaClick("cta-final")}
+            >
+              Create account
+            </a>
+            <a
+              href="/admin/login"
+              className="cta-secondary"
+              onClick={() => handleCtaClick("cta-admin")}
+            >
+              Open admin demo
+            </a>
           </div>
         </div>
       </section>
