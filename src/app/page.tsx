@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import BookingAnimation from "@/components/BookingAnimation";
 import DemoGate from "@/components/DemoGate";
 import { track, identifyUser } from "@/lib/analytics";
+import { trackFunnelStep } from "@/lib/funnelTracking";
 
 const features = [
   { title: "Automated Booking", body: "Customers book online in under 60 seconds.", icon: "AB" },
@@ -75,6 +76,14 @@ export default function Home() {
 
       setIsDemoMode(demoParam || !!savedEmail);
       setDemoUnlocked(!!savedEmail);
+
+      // Track demo access for funnel
+      if (demoParam || !!savedEmail) {
+        trackFunnelStep({
+          step: "demo_accessed",
+          email: savedEmail || undefined,
+        });
+      }
     }
 
     track("hero_view");

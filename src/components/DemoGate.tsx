@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { track, identifyUser } from "@/lib/analytics";
+import { trackFunnelStep } from "@/lib/funnelTracking";
 
 interface DemoGateProps {
   onUnlock: () => void;
@@ -27,6 +28,13 @@ export default function DemoGate({ onUnlock }: DemoGateProps) {
 
       // Identify in PostHog
       identifyUser(email);
+
+      // Track funnel step
+      trackFunnelStep({
+        step: "demo_email_captured",
+        email,
+      });
+
       track("demo_email_captured", { email });
 
       // Send to backend
