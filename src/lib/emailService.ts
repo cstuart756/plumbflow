@@ -1,6 +1,6 @@
 /**
  * Email Service Integration
- * Supports SendGrid and Mailgun
+ * Supports SendGrid, Mailgun, and Resend
  */
 
 interface EmailParams {
@@ -84,8 +84,50 @@ class MailgunEmailService {
   }
 }
 
+class ResendEmailService {
+  private apiKey: string;
+
+  constructor() {
+    this.apiKey = process.env.RESEND_API_KEY || "";
+  }
+
+  async send(params: EmailParams): Promise<boolean> {
+    if (!this.apiKey) {
+      console.warn("Resend API key not configured");
+      return false;
+    }
+
+    const from = params.from || process.env.MAIL_FROM || "Plumbflow <onboarding@resend.dev>";
+
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          from,
+          to: [params.to],
+          subject: params.subject,
+          html: params.html,
+        }),
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error("[Resend Error]", error);
+      return false;
+    }
+  }
+}
+
 export function getEmailService() {
   const provider = process.env.EMAIL_PROVIDER || "sendgrid";
+
+  if (provider.toLowerCase() === "resend") {
+    return new ResendEmailService();
+  }
 
   if (provider.toLowerCase() === "mailgun") {
     return new MailgunEmailService();
