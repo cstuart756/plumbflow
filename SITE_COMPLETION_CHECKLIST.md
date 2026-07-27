@@ -11,7 +11,8 @@ This checklist is ordered by deployment risk and product readiness. Work items s
 Current note:
 - Postgres addon and baseline runtime config are now provisioned on Heroku.
 - Stripe test-mode config is now set in Heroku and checkout session creation is verified.
-- CRM, email, SMS, and analytics secrets still need production values for full feature verification.
+- Resend email is configured and verified with a real mailbox recipient.
+- CRM, SMS, and analytics secrets still need production values for full feature verification.
 
 Immediate Heroku setup commands (run with real values):
 
@@ -33,7 +34,8 @@ heroku config:set CRON_SECRET="<set-32+-char-secret>" NEXT_PUBLIC_POSTHOG_KEY="<
 - [x] Confirmation email, SMS, and CRM sync are wired into the paid-booking path.
 - [x] Run a live end-to-end smoke test in the deployed app.
 - [x] Confirm the booking persists in Postgres.
-- [ ] Confirm confirmation email and SMS behavior in a real environment.
+- [x] Confirm confirmation email behavior in a real environment.
+- [ ] Confirm SMS behavior in a real environment.
 - [ ] Confirm CRM lead creation/update behavior in a real environment.
 
 ## 3. Admin Surface
@@ -50,6 +52,12 @@ heroku config:set CRON_SECRET="<set-32+-char-secret>" NEXT_PUBLIC_POSTHOG_KEY="<
 - [x] Validate Stripe checkout with a live test mode flow.
 - [x] Verify webhook handling for success and failure cases.
 - [ ] Confirm pricing tiers match the marketing copy.
+
+Current Stripe/pricing mapping note:
+- Stripe checkout currently charges `price_1TxtsaLYr2lf5YJtMl9iRKe3` at $99.00.
+- Marketing homepage cards show Starter $29, Pro $79, Business $149.
+- `/api/pricing` defaults currently return Basic $49.99, Pro $99.99, Premium $299.99.
+- Action needed: choose one source of truth and align Stripe checkout price(s), homepage cards, and `/api/pricing` data.
 
 ## 5. Content and SEO
 
@@ -81,4 +89,4 @@ heroku config:set CRON_SECRET="<set-32+-char-secret>" NEXT_PUBLIC_POSTHOG_KEY="<
 - Completed: Production Environment Variables
 - Completed: Build fixes and Heroku deploy
 - Completed: Booking funnel wiring, admin nav polish, and SEO indexability
-- In progress: Provider integration verification (CRM/Email/SMS)
+- In progress: Provider integration verification (CRM/SMS)
