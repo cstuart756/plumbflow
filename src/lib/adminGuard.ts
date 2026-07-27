@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { getAdminCookieName, verifyAdminCookieValue } from "@/lib/adminAuth";
 
-export function isAdminAuthed(): boolean {
-  const cookieValue = cookies().get(getAdminCookieName())?.value;
+export async function isAdminAuthed(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get(getAdminCookieName())?.value;
   return verifyAdminCookieValue(cookieValue);
 }

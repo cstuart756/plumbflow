@@ -7,7 +7,8 @@ import { AdminBookingsClient } from "@/app/admin/AdminBookingsClient";
 export const runtime = "nodejs";
 
 export default async function AdminPage() {
-  const cookieValue = cookies().get(getAdminCookieName())?.value;
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get(getAdminCookieName())?.value;
   if (!verifyAdminCookieValue(cookieValue)) {
     redirect("/admin/login");
   }

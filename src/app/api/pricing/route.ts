@@ -4,9 +4,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { PrismaClient, PlanTier } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { PlanTier } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 

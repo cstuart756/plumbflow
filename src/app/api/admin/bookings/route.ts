@@ -9,7 +9,7 @@ function isValidEmail(email: string): boolean {
 }
 
 export async function GET() {
-  if (!isAdminAuthed()) {
+  if (!(await isAdminAuthed())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -29,7 +29,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!isAdminAuthed()) {
+  if (!(await isAdminAuthed())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -14,7 +14,6 @@ export function initPosthog() {
     capture_pageview: true,
     session_recording: {
       maskAllInputs: true,
-      maskTextInputs: true,
     },
   });
 }

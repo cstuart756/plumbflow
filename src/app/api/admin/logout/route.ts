@@ -5,7 +5,7 @@ import { getAdminCookieName } from "@/lib/adminAuth";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set({
     name: getAdminCookieName(),
     value: "",

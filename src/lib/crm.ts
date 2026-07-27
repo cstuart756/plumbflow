@@ -103,7 +103,7 @@ class PipedriveCRM {
   }
 }
 
-class SalesforceC RM {
+class SalesforceCRM {
   private instanceUrl: string;
   private accessToken: string;
 
@@ -154,7 +154,7 @@ export function getCRMClient() {
     case "pipedrive":
       return new PipedriveCRM();
     case "salesforce":
-      return new SalesforceC RM();
+      return new SalesforceCRM();
     case "hubspot":
     default:
       return new HubSpotCRM();

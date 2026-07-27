@@ -8,7 +8,12 @@ const fromNumber = process.env.TWILIO_PHONE_NUMBER || "+10000000000";
 
 const client = twilio(accountSid, authToken);
 
-export async function sendSMSReminder({ to, message }) {
+interface SMSReminderParams {
+  to: string;
+  message: string;
+}
+
+export async function sendSMSReminder({ to, message }: SMSReminderParams) {
   try {
     const msg = await client.messages.create({
       body: message,

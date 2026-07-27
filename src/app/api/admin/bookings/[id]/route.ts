@@ -11,7 +11,7 @@ function isValidEmail(email: string): boolean {
 }
 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
-  if (!isAdminAuthed()) {
+  if (!(await isAdminAuthed())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -71,7 +71,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 }
 
 export async function DELETE(_req: Request, context: { params: Promise<{ id: string }> }) {
-  if (!isAdminAuthed()) {
+  if (!(await isAdminAuthed())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

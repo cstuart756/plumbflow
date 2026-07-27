@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set({
     name: getAdminCookieName(),
     value: createAdminCookieValue(),
