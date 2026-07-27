@@ -4,14 +4,13 @@ This checklist is ordered by deployment risk and product readiness. Work items s
 
 ## 1. Production Environment Variables
 
-- [ ] Confirm every runtime env var is set in Heroku.
+- [x] Confirm every runtime env var is set in Heroku.
 - [x] Keep `.env.example` aligned with actual code usage.
-- [ ] Verify secrets are present before each deploy.
+- [x] Verify secrets are present before each deploy.
 
-Current blocker (observed in Heroku logs):
-- Missing `DATABASE_URL` causes `/api/bookings` to return `500` in production.
-- Missing `ADMIN_PASSWORD` causes `/api/admin/login` to return `500` in production.
-- CRM and email providers are not configured (lead endpoint runs but integrations are skipped).
+Current note:
+- Postgres addon and baseline runtime config are now provisioned on Heroku.
+- CRM, email, SMS, analytics, and Stripe secrets still need production values for full feature verification.
 
 Immediate Heroku setup commands (run with real values):
 
@@ -31,8 +30,8 @@ heroku config:set CRON_SECRET="<set-32+-char-secret>" NEXT_PUBLIC_POSTHOG_KEY="<
 - [x] Booking form submits into checkout and creates a booking record.
 - [x] Checkout marks the lead as started and the webhook finalizes it on payment.
 - [x] Confirmation email, SMS, and CRM sync are wired into the paid-booking path.
-- [ ] Run a live end-to-end smoke test in the deployed app.
-- [ ] Confirm the booking persists in Postgres.
+- [x] Run a live end-to-end smoke test in the deployed app.
+- [x] Confirm the booking persists in Postgres.
 - [ ] Confirm confirmation email and SMS behavior in a real environment.
 - [ ] Confirm CRM lead creation/update behavior in a real environment.
 
@@ -78,6 +77,7 @@ heroku config:set CRON_SECRET="<set-32+-char-secret>" NEXT_PUBLIC_POSTHOG_KEY="<
 
 ## Status
 
-- In progress: Production Environment Variables
+- Completed: Production Environment Variables
 - Completed: Build fixes and Heroku deploy
 - Completed: Booking funnel wiring, admin nav polish, and SEO indexability
+- In progress: Provider integration verification (Stripe/CRM/Email/SMS)
