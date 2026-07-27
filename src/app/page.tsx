@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BookingAnimation from "@/components/BookingAnimation";
+import BookingForm from "@/components/BookingForm";
 import DemoGate from "@/components/DemoGate";
 import { track, identifyUser } from "@/lib/analytics";
 import { trackFunnelStep } from "@/lib/funnelTracking";
@@ -260,6 +261,25 @@ export default function Home() {
             <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Step 3</p>
             <h3 className="mt-2 text-lg font-semibold">Receive confirmation</h3>
             <p className="mt-2 text-sm text-slate-700">Email and SMS sent instantly with booking reference.</p>
+          </article>
+        </div>
+        <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <article className="glass-card p-6">
+            <h3 className="text-xl font-semibold text-slate-900">Live booking form</h3>
+            <p className="mt-2 text-sm text-slate-700">
+              This form creates the booking and routes customers into checkout when Stripe is configured.
+            </p>
+            <div className="mt-5">
+              <BookingForm />
+            </div>
+          </article>
+          <article className="glass-card p-6">
+            <h3 className="text-xl font-semibold text-slate-900">What happens after submit</h3>
+            <ul className="mt-3 space-y-3 text-sm text-slate-700">
+              <li>• Booking record is created in Postgres.</li>
+              <li>• Stripe checkout opens if payment is enabled.</li>
+              <li>• Follow-up email and SMS hooks can run from the same booking event.</li>
+            </ul>
           </article>
         </div>
       </section>

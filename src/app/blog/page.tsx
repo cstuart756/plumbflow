@@ -1,6 +1,11 @@
-"use client";
+import { prisma } from "@/lib/prisma";
 
-import { useEffect, useState } from "react";
+export const metadata = {
+  title: "Plumbing Tips & Insights",
+  description: "Expert advice for keeping your plumbing in top shape.",
+};
+
+export const dynamic = "force-dynamic";
 
 interface BlogPost {
   id: string;
@@ -11,29 +16,23 @@ interface BlogPost {
   views: number;
 }
 
-export default function BlogPage() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchPosts() {
-      try {
-        const res = await fetch("/api/blog");
-        const data = await res.json();
-        setPosts(data);
-      } catch (error) {
-        console.error("Failed to fetch blog posts:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchPosts();
-  }, []);
-
-  if (loading) {
-    return <div className="p-8 text-center">Loading blog posts...</div>;
-  }
+export default async function BlogPage() {
+  const posts = (await prisma.blogPost.findMany({
+    where: { published: true },
+    orderBy: { publishedAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      publishedAt: true,
+      views: true,
+    },
+  })).map((post) => ({
+    ...post,
+    excerpt: post.excerpt ?? undefined,
+    publishedAt: post.publishedAt ? post.publishedAt.toISOString() : undefined,
+  })) as BlogPost[];
 
   return (
     <div className="min-h-screen bg-white">

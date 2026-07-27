@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { sendBookingConfirmationEmail } from "@/utils/email";
+import { sendSMSReminder } from "@/utils/sms";
+import { getCRMClient } from "@/lib/crm";
+import { getLeadQuality, scoreLeadQuality } from "@/lib/leadScoring";
 
 export const runtime = "nodejs";
 
@@ -48,6 +51,60 @@ export async function POST(req: Request) {
           },
         });
 
+        const leadScore = scoreLeadQuality({
+          emailDomain: booking.email.split("@")[1],
+          attemptedBooking: true,
+          completedBooking: true,
+          funnelProgress: "booking_completed",
+          lastInteractionDaysAgo: 0,
+        });
+
+        await prisma.lead.upsert({
+          where: { email: booking.email },
+          create: {
+            email: booking.email,
+            firstName: booking.name.split(" ")[0] || undefined,
+            lastName: booking.name.split(" ").slice(1).join(" ") || undefined,
+            phone: booking.phone || undefined,
+            status: "BOOKING_COMPLETED",
+            quality: getLeadQuality(leadScore.total),
+            funnelScore: leadScore.total,
+            bookingStartedAt: new Date(booking.createdAt),
+            bookingCompletedAt: new Date(),
+            lastInteractionAt: new Date(),
+          },
+          update: {
+            firstName: booking.name.split(" ")[0] || undefined,
+            lastName: booking.name.split(" ").slice(1).join(" ") || undefined,
+            phone: booking.phone || undefined,
+            status: "BOOKING_COMPLETED",
+            quality: getLeadQuality(leadScore.total),
+            funnelScore: leadScore.total,
+            bookingStartedAt: new Date(booking.createdAt),
+            bookingCompletedAt: new Date(),
+            lastInteractionAt: new Date(),
+          },
+        });
+
+        const crm = getCRMClient();
+        const crmResult = await crm.createContact({
+          email: booking.email,
+          firstName: booking.name.split(" ")[0] || undefined,
+          lastName: booking.name.split(" ").slice(1).join(" ") || undefined,
+          phone: booking.phone || undefined,
+          properties: {
+            booking_id: booking.id,
+            booking_status: "completed",
+            booking_service: booking.service,
+            booking_date: booking.date,
+            booking_time: booking.time,
+          },
+        });
+
+        if (crmResult.success) {
+          console.log(`[CRM] Lead synced: ${crmResult.id}`);
+        }
+
         if (shouldSendConfirmation) {
           await sendBookingConfirmationEmail({
             name: booking.name,
@@ -55,6 +112,11 @@ export async function POST(req: Request) {
             date: booking.date,
             time: booking.time,
             service: booking.service,
+          });
+
+          await sendSMSReminder({
+            to: booking.phone,
+            message: `Plumbflow: your booking for ${booking.service} on ${booking.date} at ${booking.time} is confirmed.`,
           });
         }
       }

@@ -2,11 +2,7 @@
 // Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in your environment for production use
 import twilio from "twilio";
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID || "test-sid";
-const authToken = process.env.TWILIO_AUTH_TOKEN || "test-token";
-const fromNumber = process.env.TWILIO_PHONE_NUMBER || "+10000000000";
-
-const client = twilio(accountSid, authToken);
+const fromNumber = process.env.TWILIO_PHONE_NUMBER || "";
 
 interface SMSReminderParams {
   to: string;
@@ -14,6 +10,16 @@ interface SMSReminderParams {
 }
 
 export async function sendSMSReminder({ to, message }: SMSReminderParams) {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (!accountSid || !authToken || !fromNumber) {
+    console.warn("Twilio is not configured. Skipping SMS reminder.");
+    return false;
+  }
+
+  const client = twilio(accountSid, authToken);
+
   try {
     const msg = await client.messages.create({
       body: message,

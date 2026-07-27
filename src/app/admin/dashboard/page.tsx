@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface DashboardMetrics {
   leads: { total: number; hot: number };
@@ -52,8 +53,21 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Admin</p>
+            <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin" className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white">
+              Bookings Manager
+            </Link>
+            <Link href="/admin/login" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-900">
+              Login
+            </Link>
+          </div>
+        </div>
 
         {/* Metrics Overview */}
         {metrics && (
@@ -82,6 +96,9 @@ export default function AdminDashboard() {
           <div className="p-6 border-b">
             <h2 className="text-2xl font-bold">Top Leads by Score</h2>
           </div>
+          {leads.length === 0 ? (
+            <div className="p-6 text-sm text-slate-600">No leads yet. Capture a demo or booking to populate this table.</div>
+          ) : null}
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>

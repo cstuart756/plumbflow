@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { mockBookingResponse, demoBookings } from "@/lib/demoData";
+import { getLeadQuality, scoreLeadQuality } from "@/lib/leadScoring";
 
 export const runtime = "nodejs";
 
@@ -67,6 +68,40 @@ export async function POST(req: Request) {
       paid: false,
     },
     select: { id: true },
+  });
+
+  const [firstName, ...rest] = name.split(" ");
+  const lastName = rest.join(" ") || undefined;
+  const score = scoreLeadQuality({
+    emailDomain: email.split("@")[1],
+    attemptedBooking: true,
+    funnelProgress: "booking_started",
+    lastInteractionDaysAgo: 0,
+  });
+
+  await prisma.lead.upsert({
+    where: { email },
+    create: {
+      email,
+      firstName: firstName || undefined,
+      lastName,
+      phone: phone || undefined,
+      status: "BOOKING_STARTED",
+      quality: getLeadQuality(score.total),
+      funnelScore: score.total,
+      bookingStartedAt: new Date(),
+      lastInteractionAt: new Date(),
+    },
+    update: {
+      firstName: firstName || undefined,
+      lastName,
+      phone: phone || undefined,
+      status: "BOOKING_STARTED",
+      quality: getLeadQuality(score.total),
+      funnelScore: score.total,
+      bookingStartedAt: new Date(),
+      lastInteractionAt: new Date(),
+    },
   });
 
   const stripe = getStripe();
