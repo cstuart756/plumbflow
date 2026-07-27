@@ -10,7 +10,8 @@ This checklist is ordered by deployment risk and product readiness. Work items s
 
 Current note:
 - Postgres addon and baseline runtime config are now provisioned on Heroku.
-- CRM, email, SMS, analytics, and Stripe secrets still need production values for full feature verification.
+- Stripe test-mode config is now set in Heroku and checkout session creation is verified.
+- CRM, email, SMS, and analytics secrets still need production values for full feature verification.
 
 Immediate Heroku setup commands (run with real values):
 
@@ -46,8 +47,8 @@ heroku config:set CRON_SECRET="<set-32+-char-secret>" NEXT_PUBLIC_POSTHOG_KEY="<
 
 - [x] Booking checkout creates a Stripe session when configured.
 - [x] Webhook handling updates the booking and lead state on success.
-- [ ] Validate Stripe checkout with a live test mode flow.
-- [ ] Verify webhook handling for success and failure cases.
+- [x] Validate Stripe checkout with a live test mode flow.
+- [x] Verify webhook handling for success and failure cases.
 - [ ] Confirm pricing tiers match the marketing copy.
 
 ## 5. Content and SEO
@@ -80,4 +81,4 @@ heroku config:set CRON_SECRET="<set-32+-char-secret>" NEXT_PUBLIC_POSTHOG_KEY="<
 - Completed: Production Environment Variables
 - Completed: Build fixes and Heroku deploy
 - Completed: Booking funnel wiring, admin nav polish, and SEO indexability
-- In progress: Provider integration verification (Stripe/CRM/Email/SMS)
+- In progress: Provider integration verification (CRM/Email/SMS)
