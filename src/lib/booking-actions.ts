@@ -27,9 +27,36 @@ export async function createBookingAction(formData: FormData) {
   try {
     // Combine date and time into a single DateTime object
     const scheduledAt = new Date(`${date}T${time}:00`);
+    
+    if (isNaN(scheduledAt.getTime())) {
+      return { error: "Invalid date or time provided." };
+    }
+
+    // Create a 1-minute window to prevent millisecond drift issues
+    const startOfMinute = new Date(scheduledAt);
+    const endOfMinute = new Date(scheduledAt.getTime() + 60000);
+
+    console.log("Checking for conflicts at:", startOfMinute.toISOString());
 
     await prisma.$transaction(async (tx) => {
-      // 1. Find or create the Customer
+      // 1. Check for scheduling conflicts using a range
+      const existingBooking = await tx.booking.findFirst({
+        where: {
+          tenantId,
+          scheduledAt: {
+            gte: startOfMinute,
+            lt: endOfMinute,
+          },
+          status: { not: "CANCELED" } // Ignore canceled bookings
+        }
+      });
+
+      if (existingBooking) {
+        console.log("Conflict found! Existing booking ID:", existingBooking.id);
+        throw new Error("This time slot is already booked. Please choose another time.");
+      }
+
+      // 2. Find or create the Customer
       let customer = await tx.customer.findUnique({
         where: { tenantId_email: { tenantId, email } },
       });
@@ -40,7 +67,7 @@ export async function createBookingAction(formData: FormData) {
         });
       }
 
-      // 2. Create the Booking
+      // 3. Create the Booking
       await tx.booking.create({
         data: {
           tenantId,
@@ -51,11 +78,16 @@ export async function createBookingAction(formData: FormData) {
           status: "PENDING",
         },
       });
+      console.log("New booking created successfully.");
     });
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Booking error:", error);
+    // Pass our custom error message up to the client
+    if (error.message === "This time slot is already booked. Please choose another time.") {
+      return { error: error.message };
+    }
     return { error: "Something went wrong. Please try again." };
   }
 }
