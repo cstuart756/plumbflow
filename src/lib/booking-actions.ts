@@ -2,6 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { Resend } from "resend";
+import { render } from "@react-email/render";
+import CustomerConfirmation from "@/emails/CustomerConfirmation";
+import OwnerAlert from "@/emails/OwnerAlert";
+
+const resend = new Resend(process.env.RESEND_API_KEY || "re_missing_key");
 
 const bookingSchema = z.object({
   tenantId: z.string(),
@@ -25,21 +31,16 @@ export async function createBookingAction(formData: FormData) {
   const { tenantId, serviceId, name, email, phone, date, time, notes } = parsed.data;
 
   try {
-    // Combine date and time into a single DateTime object
     const scheduledAt = new Date(`${date}T${time}:00`);
     
     if (isNaN(scheduledAt.getTime())) {
       return { error: "Invalid date or time provided." };
     }
 
-    // Create a 1-minute window to prevent millisecond drift issues
     const startOfMinute = new Date(scheduledAt);
     const endOfMinute = new Date(scheduledAt.getTime() + 60000);
 
-    console.log("Checking for conflicts at:", startOfMinute.toISOString());
-
     await prisma.$transaction(async (tx) => {
-      // 1. Check for scheduling conflicts using a range
       const existingBooking = await tx.booking.findFirst({
         where: {
           tenantId,
@@ -47,16 +48,14 @@ export async function createBookingAction(formData: FormData) {
             gte: startOfMinute,
             lt: endOfMinute,
           },
-          status: { not: "CANCELED" } // Ignore canceled bookings
+          status: { not: "CANCELED" }
         }
       });
 
       if (existingBooking) {
-        console.log("Conflict found! Existing booking ID:", existingBooking.id);
         throw new Error("This time slot is already booked. Please choose another time.");
       }
 
-      // 2. Find or create the Customer
       let customer = await tx.customer.findUnique({
         where: { tenantId_email: { tenantId, email } },
       });
@@ -67,7 +66,6 @@ export async function createBookingAction(formData: FormData) {
         });
       }
 
-      // 3. Create the Booking
       await tx.booking.create({
         data: {
           tenantId,
@@ -78,13 +76,58 @@ export async function createBookingAction(formData: FormData) {
           status: "PENDING",
         },
       });
-      console.log("New booking created successfully.");
+
+      // Fetch tenant and service details for the emails
+      const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
+      const service = await tx.service.findUnique({ where: { id: serviceId } });
+
+      if (!tenant || !service) throw new Error("Tenant or service not found");
+
+      // Format date/time for the email
+      const formattedDate = scheduledAt.toLocaleDateString("en-GB", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const formattedTime = scheduledAt.toLocaleTimeString("en-GB", { hour: '2-digit', minute: '2-digit' });
+
+      // 1. Render and Send confirmation to Customer
+      const customerHtml = await render(
+        CustomerConfirmation({
+          customerName: name,
+          businessName: tenant.businessName,
+          serviceName: service.name,
+          date: formattedDate,
+          time: formattedTime,
+        }) as React.ReactElement
+      );
+
+      await resend.emails.send({
+        from: process.env.MAIL_FROM || "Plumbflow <onboarding@resend.dev>",
+        to: email,
+        subject: `Booking Confirmed: ${service.name} with ${tenant.businessName}`,
+        html: customerHtml,
+      });
+
+      // 2. Render and Send alert to Business Owner
+      const ownerHtml = await render(
+        OwnerAlert({
+          businessName: tenant.businessName,
+          customerName: name,
+          customerPhone: phone,
+          serviceName: service.name,
+          date: formattedDate,
+          time: formattedTime,
+        }) as React.ReactElement
+      );
+
+      await resend.emails.send({
+        from: process.env.MAIL_FROM || "Plumbflow <onboarding@resend.dev>",
+        to: tenant.email,
+        subject: `New Booking: ${name} for ${service.name}`,
+        html: ownerHtml,
+      });
     });
 
     return { success: true };
   } catch (error: any) {
     console.error("Booking error:", error);
-    // Pass our custom error message up to the client
     if (error.message === "This time slot is already booked. Please choose another time.") {
       return { error: error.message };
     }
