@@ -1,0 +1,11 @@
+name: Technical Chore
+description: Refactoring, CI/CD, dependencies, or cleanup.
+title: "chore: "
+labels: ["type:chore"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What needs doing?
+    validations:
+      required: true
