@@ -15,6 +15,18 @@ export default async function DashboardPage() {
     where: { id: session.user.tenantId },
   });
 
+  // Fetch bookings for this tenant, including customer and service details
+  const bookings = await prisma.booking.findMany({
+    where: { tenantId: session.user.tenantId },
+    include: {
+      customer: true,
+      service: true,
+    },
+    orderBy: {
+      scheduledAt: "desc",
+    },
+  });
+
   return (
     <main className="pb-20">
       <section className="mx-auto mt-6 max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -61,17 +73,56 @@ export default async function DashboardPage() {
         <div className="glass-card p-6 sm:p-8">
           <h2 className="section-title">Incoming Bookings</h2>
           
-          <div className="mt-8 text-center py-12">
-            <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+          {bookings.length === 0 ? (
+            <div className="mt-8 text-center py-12">
+              <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900">No bookings yet</h3>
+              <p className="mt-2 text-sm text-slate-700 max-w-md mx-auto">
+                Start by sharing your booking link with customers. Your first job can land today.
+              </p>
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">No bookings yet</h3>
-            <p className="mt-2 text-sm text-slate-700 max-w-md mx-auto">
-              Start by sharing your booking link with customers. Your first job can land today.
-            </p>
-          </div>
+          ) : (
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-4 px-4 font-semibold text-slate-700 text-sm">Date & Time</th>
+                    <th className="py-4 px-4 font-semibold text-slate-700 text-sm">Customer</th>
+                    <th className="py-4 px-4 font-semibold text-slate-700 text-sm">Service</th>
+                    <th className="py-4 px-4 font-semibold text-slate-700 text-sm">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map((booking) => (
+                    <tr key={booking.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                      <td className="py-4 px-4 text-sm text-slate-900">
+                        {new Date(booking.scheduledAt).toLocaleDateString("en-GB", {
+                          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit'
+                        })}
+                      </td>
+                      <td className="py-4 px-4">
+                        <p className="text-sm font-medium text-slate-900">{booking.customer.name}</p>
+                        <p className="text-xs text-slate-500">{booking.customer.phone}</p>
+                      </td>
+                      <td className="py-4 px-4 text-sm text-slate-700">
+                        {booking.service.name}
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-800">
+                          {booking.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
       </section>
