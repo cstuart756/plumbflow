@@ -18,11 +18,16 @@ function createPrismaClient(): PrismaClient {
     }) as PrismaClient;
   }
 
+  // Strip sslmode=require to prevent pg from overriding our custom SSL settings
+  const cleanConnectionString = connectionString.replace(/\?sslmode=require/, '').replace(/&sslmode=require/, '');
+
   const requiresSsl = /sslmode=require/i.test(connectionString) || process.env.NODE_ENV === "production";
+  
   const pool = new Pool({
-    connectionString,
+    connectionString: cleanConnectionString,
     ...(requiresSsl ? { ssl: { rejectUnauthorized: false } } : {}),
   });
+  
   const adapter = new PrismaPg(pool);
 
   return new PrismaClient({
@@ -34,4 +39,3 @@ function createPrismaClient(): PrismaClient {
 export const prisma = global.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") global.prisma = prisma;
-
