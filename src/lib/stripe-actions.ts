@@ -6,9 +6,8 @@ import { authOptions } from "@/lib/auth";
 import Stripe from "stripe";
 import { redirect } from "next/navigation";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-01-27.acacia",
-});
+// Removed apiVersion to prevent deployment type mismatches
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function createCheckoutSessionAction() {
   const session = await getServerSession(authOptions);
