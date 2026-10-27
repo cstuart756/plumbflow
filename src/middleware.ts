@@ -1,32 +1,37 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-export default withAuth({
-  pages: {
-    signIn: "/login",
+export default withAuth(
+  function middleware(req) {
+    // 1. Force HTTPS in production
+    if (
+      process.env.NODE_ENV === "production" &&
+      req.headers.get("x-forwarded-proto") !== "https"
+    ) {
+      const url = req.nextUrl.clone();
+      url.protocol = "https:";
+      url.host = req.headers.get("host") || url.host;
+      return NextResponse.redirect(url, 301);
+    }
+
+    return NextResponse.next();
   },
-});
-
-export function middleware(request: NextRequest) {
-  // 1. Force HTTPS in production
-  if (
-    process.env.NODE_ENV === "production" &&
-    request.headers.get("x-forwarded-proto") !== "https"
-  ) {
-    return NextResponse.redirect(
-      `https://${request.headers.get("host")}${request.nextUrl.pathname}`,
-      301
-    );
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        // 2. Only require authentication for /app routes
+        if (req.nextUrl.pathname.startsWith("/app")) {
+          return !!token;
+        }
+        // Allow public access to everything else (landing page, booking pages, login, register)
+        return true;
+      },
+    },
+    pages: {
+      signIn: "/login",
+    },
   }
-
-  // 2. Handle Auth protection for /app routes
-  if (request.nextUrl.pathname.startsWith("/app")) {
-    return withAuth({
-      pages: { signIn: "/login" },
-    })(request);
-  }
-}
+);
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
