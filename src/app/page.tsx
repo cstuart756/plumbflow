@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BookingAnimation from "@/components/BookingAnimation";
-import BookingForm from "@/components/BookingForm";
 import DemoGate from "@/components/DemoGate";
 import { track, identifyUser } from "@/lib/analytics";
 import { trackFunnelStep } from "@/lib/funnelTracking";
@@ -123,7 +122,7 @@ export default function Home() {
 
   return (
     <main className="pb-20">
-      {/* NEW NAVIGATION BAR */}
+      {/* NAVIGATION BAR */}
       <nav className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src="/images/plumbflowfavicon.png" alt="Plumbflow" className="h-8 w-8" />
@@ -277,24 +276,12 @@ export default function Home() {
             <p className="mt-2 text-sm text-slate-700">Email and SMS sent instantly with booking reference.</p>
           </article>
         </div>
-        <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-          <article className="glass-card p-6">
-            <h3 className="text-xl font-semibold text-slate-900">Live booking form</h3>
-            <p className="mt-2 text-sm text-slate-700">
-              This form creates the booking and routes customers into checkout when Stripe is configured.
-            </p>
-            <div className="mt-5">
-              <BookingForm />
-            </div>
-          </article>
-          <article className="glass-card p-6">
-            <h3 className="text-xl font-semibold text-slate-900">What happens after submit</h3>
-            <ul className="mt-3 space-y-3 text-sm text-slate-700">
-              <li>• Booking record is created in Postgres.</li>
-              <li>• Stripe checkout opens if payment is enabled.</li>
-              <li>• Follow-up email and SMS hooks can run from the same booking event.</li>
-            </ul>
-          </article>
+        <div className="mt-6 overflow-hidden rounded-2xl border border-white/70">
+          <img 
+            src="/images/plumbflowhero.png" 
+            alt="Booking form interface preview" 
+            className="w-full object-cover" 
+          />
         </div>
       </section>
 
@@ -428,8 +415,6 @@ export default function Home() {
           <img src="/images/plumbflownotifications.png" alt="Notifications and automation mockups" className="w-full object-cover" />
         </div>
       </section>
-
-      {/* LOGO VARIANTS SECTION REMOVED HERE */}
 
       <section className="mx-auto mt-14 max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="glass-card rounded-3xl p-7 text-center sm:p-10">
