@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import BookingAnimation from "@/components/BookingAnimation";
 import BookingForm from "@/components/BookingForm";
 import DemoGate from "@/components/DemoGate";
@@ -69,7 +70,6 @@ export default function Home() {
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
-    // Check if user came from demo link or has already unlocked
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const demoParam = params.get("demo") === "true";
@@ -78,7 +78,6 @@ export default function Home() {
       setIsDemoMode(demoParam || !!savedEmail);
       setDemoUnlocked(!!savedEmail);
 
-      // Track demo access for funnel
       if (demoParam || !!savedEmail) {
         trackFunnelStep({
           step: "demo_accessed",
@@ -90,7 +89,6 @@ export default function Home() {
     track("hero_view");
   }, []);
 
-  // Show demo gate if in demo mode but not unlocked
   if (isDemoMode && !demoUnlocked) {
     return (
       <main className="flex min-h-screen items-center justify-center pb-20">
@@ -125,7 +123,23 @@ export default function Home() {
 
   return (
     <main className="pb-20">
-      <section className="hero-shell mx-auto mt-6 max-w-6xl px-4 sm:px-6 lg:px-8">
+      {/* NEW NAVIGATION BAR */}
+      <nav className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img src="/images/plumbflowfavicon.png" alt="Plumbflow" className="h-8 w-8" />
+          <span className="text-xl font-bold text-slate-900 tracking-tight">Plumbflow</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link href="/login" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
+            Sign in
+          </Link>
+          <Link href="/register" className="cta-primary text-sm py-2.5 px-5">
+            Register
+          </Link>
+        </div>
+      </nav>
+
+      <section className="hero-shell mx-auto mt-2 max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="hero-grid section-reveal rounded-3xl p-6 sm:p-10 lg:p-12">
           <div>
             <p className="label-pill mb-4 inline-flex">Built for real plumbing teams</p>
@@ -415,33 +429,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto mt-14 max-w-6xl px-4 sm:px-6 lg:px-8">
-        <h2 className="section-title">Logo variants</h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <article className="glass-card p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Full logo</p>
-            <div className="mt-3 flex items-center gap-2">
-              <img src="/images/plumbflowfavicon.png" alt="Plumbflow icon" className="h-8 w-8" />
-              <span className="text-lg font-bold text-slate-900">Plumbflow</span>
-            </div>
-          </article>
-          <article className="glass-card p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Icon only</p>
-            <img src="/images/plumbflowfavicon.png" alt="Plumbflow icon-only mark" className="mt-3 h-10 w-10" />
-          </article>
-          <article className="glass-card bg-slate-900 p-5 text-white">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Dark mode version</p>
-            <div className="mt-3 flex items-center gap-2">
-              <img src="/images/plumbflowfavicon.png" alt="Plumbflow dark mode mark" className="h-8 w-8 rounded" />
-              <span className="text-lg font-bold text-white">Plumbflow</span>
-            </div>
-          </article>
-          <article className="glass-card p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Monochrome</p>
-            <div className="mt-3 rounded-lg bg-slate-100 p-3 text-center text-lg font-bold text-slate-700">PF</div>
-          </article>
-        </div>
-      </section>
+      {/* LOGO VARIANTS SECTION REMOVED HERE */}
 
       <section className="mx-auto mt-14 max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="glass-card rounded-3xl p-7 text-center sm:p-10">
@@ -449,24 +437,23 @@ export default function Home() {
           <h2 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">Start booking more plumbing jobs this week.</h2>
           <p className="mx-auto mt-3 max-w-xl text-slate-700">Launch the full flow now and adapt pricing, plans, and automations as your team grows.</p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <a
-              href="/account/register"
+            <Link
+              href="/register"
               className="cta-primary"
               onClick={() => handleCtaClick("cta-final")}
             >
               Create account
-            </a>
-            <a
-              href="/admin/login"
+            </Link>
+            <Link
+              href="/login"
               className="cta-secondary"
               onClick={() => handleCtaClick("cta-admin")}
             >
-              Open admin demo
-            </a>
+              Sign in
+            </Link>
           </div>
         </div>
       </section>
     </main>
   );
 }
-
