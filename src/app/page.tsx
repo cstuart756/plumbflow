@@ -122,11 +122,19 @@ export default function Home() {
 
   return (
     <main className="pb-20">
-      {/* NAVIGATION BAR */}
+      {/* NAVIGATION BAR - FIXED LOGO */}
       <nav className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/images/plumbflowfavicon.png" alt="Plumbflow" className="h-8 w-8" />
-          <span className="text-xl font-bold text-slate-900 tracking-tight">Plumbflow</span>
+          {/* Clean Blue Water Drop SVG */}
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            fill="currentColor" 
+            className="w-8 h-8 text-blue-600"
+          >
+            <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />
+          </svg>
+          <span className="text-2xl font-bold text-blue-600 tracking-tight">Plumbflow</span>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
@@ -138,6 +146,7 @@ export default function Home() {
         </div>
       </nav>
 
+      {/* HERO SECTION - BACKGROUND INTEGRITY KEPT */}
       <section className="hero-shell mx-auto mt-2 max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="hero-grid section-reveal rounded-3xl p-6 sm:p-10 lg:p-12">
           <div>
