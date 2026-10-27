@@ -77,17 +77,15 @@ export async function createBookingAction(formData: FormData) {
         },
       });
 
-      // Fetch tenant and service details for the emails
       const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
       const service = await tx.service.findUnique({ where: { id: serviceId } });
 
       if (!tenant || !service) throw new Error("Tenant or service not found");
 
-      // Format date/time for the email
       const formattedDate = scheduledAt.toLocaleDateString("en-GB", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       const formattedTime = scheduledAt.toLocaleTimeString("en-GB", { hour: '2-digit', minute: '2-digit' });
 
-      // 1. Render and Send confirmation to Customer
+      // 1. Send to Customer
       const customerHtml = await render(
         CustomerConfirmation({
           customerName: name,
@@ -95,17 +93,22 @@ export async function createBookingAction(formData: FormData) {
           serviceName: service.name,
           date: formattedDate,
           time: formattedTime,
-        }) as React.ReactElement
+        })
       );
 
-      await resend.emails.send({
+      const { error: customerEmailError } = await resend.emails.send({
         from: process.env.MAIL_FROM || "Plumbflow <onboarding@resend.dev>",
         to: email,
         subject: `Booking Confirmed: ${service.name} with ${tenant.businessName}`,
         html: customerHtml,
       });
 
-      // 2. Render and Send alert to Business Owner
+      if (customerEmailError) {
+        console.error("Resend Customer Error:", customerEmailError);
+        throw new Error(customerEmailError.message);
+      }
+
+      // 2. Send to Business Owner
       const ownerHtml = await render(
         OwnerAlert({
           businessName: tenant.businessName,
@@ -114,15 +117,20 @@ export async function createBookingAction(formData: FormData) {
           serviceName: service.name,
           date: formattedDate,
           time: formattedTime,
-        }) as React.ReactElement
+        })
       );
 
-      await resend.emails.send({
+      const { error: ownerEmailError } = await resend.emails.send({
         from: process.env.MAIL_FROM || "Plumbflow <onboarding@resend.dev>",
         to: tenant.email,
         subject: `New Booking: ${name} for ${service.name}`,
         html: ownerHtml,
       });
+
+      if (ownerEmailError) {
+        console.error("Resend Owner Error:", ownerEmailError);
+        throw new Error(ownerEmailError.message);
+      }
     });
 
     return { success: true };
@@ -130,6 +138,9 @@ export async function createBookingAction(formData: FormData) {
     console.error("Booking error:", error);
     if (error.message === "This time slot is already booked. Please choose another time.") {
       return { error: error.message };
+    }
+    if (error.message.includes("testing emails") || error.message.includes("domain")) {
+       return { error: "Email system is not fully configured. Please contact support." };
     }
     return { error: "Something went wrong. Please try again." };
   }
